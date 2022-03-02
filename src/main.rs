@@ -1,0 +1,63 @@
+mod app;
+
+use winit::event::{ElementState, Event, VirtualKeyCode};
+use winit::event::WindowEvent;
+use winit::event::KeyboardInput;
+use winit::event_loop::EventLoop;
+use winit::window::Window;
+use winit::event_loop::ControlFlow;
+use crate::app::AppState;
+
+async fn run(event_loop: EventLoop<()>, window:Window) {
+    let mut app = AppState::new(&window).await;
+
+    event_loop.run(move |event, _, control_flow|{
+        match event {
+            // Only handle window event
+            Event::WindowEvent {event, window_id,..}if window_id == window.id()  => {
+                match event {
+                    // Input handled by application so do nothing
+                    event if app.input(&event) => {}
+                    // Stop the loop if the application is required to stop
+                    WindowEvent::CloseRequested |
+                    WindowEvent::Destroyed |
+                    WindowEvent::KeyboardInput { input:KeyboardInput {state: ElementState::Pressed, virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..} => {
+                        *control_flow = ControlFlow::Exit;
+                    }
+                    // Handle resizing
+                    WindowEvent::Resized(size) =>{
+                        app.resize(size);
+                    }
+                    WindowEvent::ScaleFactorChanged{new_inner_size, ..} =>{
+                        app.resize(*new_inner_size);
+                    }
+                    _ => {}
+                }
+            },
+            Event::RedrawRequested(window_id) if window_id == window.id() => {
+                app.update();
+                match app.render() {
+                    Ok(_) => {}
+                    // Reconfigure the surface if lost
+                    Err(wgpu::SurfaceError::Lost) => app.resize(app.size),
+                    // The system is out of memory, we should probably quit
+                    Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                    // All other errors (Outdated, Timeout) should be resolved by the next frame
+                    Err(e) => eprintln!("{:?}", e),
+                }
+            },
+            Event::RedrawEventsCleared | Event::MainEventsCleared => {
+                window.request_redraw();
+            }
+            // Any other event is ignore
+            _ => {}
+        }
+    })
+}
+
+fn main() {
+    let event_loop = EventLoop::new();
+    let window = Window::new(&event_loop).unwrap();
+    env_logger::init();
+    pollster::block_on(run(event_loop, window));
+}
