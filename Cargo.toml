@@ -10,4 +10,5 @@ winit = "0.26.1"
 env_logger = "0.9.0"
 pollster = "0.2.5"
 wgpu = { git="https://github.com/gfx-rs/wgpu.git", features=["vulkan-portability"] }
-bytemuck = "1.7.3"
+bytemuck = { version = "1.7.3", features=["derive"] }
+stopwatch = "0.0.7"
