@@ -12,9 +12,16 @@ struct Shape{ //align(16)
 
 @group(0) @binding(0)
 var target_texture: texture_storage_2d<rgba8unorm, write>;
+
+struct ShapeCount{
+    count:u32;
+};
+
 @group(1) @binding(0)
-var<storage> shapes: array<Shape>;
+var<uniform> shape_count: ShapeCount;
 @group(1) @binding(1)
+var<storage> shapes: array<Shape>;
+@group(1) @binding(2)
 var<storage> spheres: array<Sphere>;
 
 
@@ -81,7 +88,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     loop {
         var closest_distance : f32= 9999999999.0;
         closest_shape = -1;
-        for(var i:u32 = 0u; i < 5u && threshold < closest_distance; i=i+1u){
+        for(var i:u32 = 0u; i < shape_count.count && threshold < closest_distance; i=i+1u){
             let shape_dist = shape_distance(ray_pos, i);
             if(closest_distance > shape_dist){
                 closest_shape = i32(i);
