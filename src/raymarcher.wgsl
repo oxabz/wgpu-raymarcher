@@ -5,9 +5,10 @@ struct Sphere{ //align(16)
 
 struct Shape{ //align(16)
     color: vec3<f32>; //offset(0) align(16) size(12)
-    shape_type: u32; //offset(12) align(4) size(4)
-    index: u32; //offset(16) align(4) size(4)
-    //padding(12)
+    index: u32; //offset(12) align(4) size(4)
+    shape_type: u32; //offset(16) align(4) size(4)
+    reflectivity: f32; //offset(20) align(4) size(4)
+    //padding(8)
 };
 
 @group(0) @binding(0)
@@ -118,6 +119,10 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     return res;
 };
 
+fn reflection(incoming:vec3<f32>, normal:vec3<f32>)->vec3<f32>{
+    return -2.0*dot(incoming,normal)/dot(normal,normal)*normal+incoming;
+};
+
 @stage(compute) @workgroup_size(16,16)
 fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let target_size = textureDimensions(target_texture);
@@ -131,11 +136,13 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let hit_threshold = 0.01;
     let background_color = vec3<f32>(0.02, 0.0, 0.05);
     let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
+    let reflection_rays = 10u;
+    let reflection_threshold = 0.01;
 
     let shape_count = 5u;
 
     let depth = 2.0;
-    let ray_direction = normalize(vec3<f32>(-f32(i32(x)-width/2)/f32(width), -f32(i32(y)-height/2)/f32(height), depth));
+    var ray_direction = normalize(vec3<f32>(-f32(i32(x)-width/2)/f32(width), -f32(i32(y)-height/2)/f32(height), depth));
 
 
     var ray : RayParams;
@@ -145,6 +152,48 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     ray.skip_shape = -1;
 
     var color: vec3<f32> = vec3<f32>(0.0,0.0,0.0);
+    var color_weight:f32 = 1.0;
+    var latest_hit:Hit;
+    latest_hit.hit_pos = vec3<f32>(0.0,0.0,0.0);
+    latest_hit.hit_shape = -1;
+    var bounce_count = 0u;
+    loop {
+        if (bounce_count >= reflection_rays || color_weight<reflection_threshold){
+            color = color * (1.0/(1.0-color_weight));
+            //color += background_color * color_weight;
+            break;
+        }
+        ray.skip_shape = latest_hit.hit_shape;
+        latest_hit = send_ray(latest_hit.hit_pos, ray_direction, ray);
+        if (latest_hit.hit_shape < 0){
+            color += background_color * color_weight;
+            break;
+        }
+        var s = shapes[latest_hit.hit_shape];
+        let reflectivity = s.reflectivity;
+        let matness = 1.0 - reflectivity;
+
+        var matcolor = vec3<f32>(shapes[latest_hit.hit_shape].color);
+
+        let normal = shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
+        // Applying mat lighting
+        let self_oclusion = max(0.0,-dot(light_direction, normal));
+        if (self_oclusion>0.00001){
+            var light_ray : RayParams;
+            light_ray.max_length = 20.0;
+            light_ray.max_step = 200u;
+            light_ray.threshold = 0.001;
+            light_ray.skip_shape = latest_hit.hit_shape;
+            let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
+        };
+        matcolor = matcolor * self_oclusion * f32(-min(0, light_hit.hit_shape));
+
+        color += matcolor * color_weight * matness;
+        color_weight = color_weight * reflectivity;
+        ray_direction = reflection(ray_direction, normal);
+        bounce_count += 1u;
+    }
+    /*
     let hit = send_ray(vec3<f32>(0.0,0.0,0.0), ray_direction, ray);
     if(hit.hit_shape < 0){
         color = background_color;
@@ -163,6 +212,6 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             let light_hit = send_ray(hit.hit_pos, -light_direction, light_ray);
         }
         color = color * self_oclusion * f32(-min(0, light_hit.hit_shape));
-    }
+    }*/
     textureStore(target_texture, vec2<i32>(i32(x),i32(y)), vec4<f32>(color,1.0));
 }

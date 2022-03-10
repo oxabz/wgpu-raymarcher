@@ -12,22 +12,26 @@ const SHAPE_CAPACITY: u64 = 32;
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct Shape {
     color: Color,
-    shape_type: u32,
     index:u32,
-    _pad:[f32;3]
+    shape_type: u32,
+    reflectivity: f32,
+    _pad:[f32;2]
 }
+
+
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct ShapeCount (u32);
 
 impl Shape {
-    pub fn new( color: Color, shape_type:u32, index:u32 )->Self{
+    pub fn new( color: Color, shape_type:u32, index:u32, reflectivity:f32 )->Self{
         Self{
             color,
             shape_type,
             index,
-            _pad: [0.0;3]
+            reflectivity,
+            _pad: [0.0;2]
         }
     }
 }
@@ -71,10 +75,10 @@ impl ShapeCollection {
         Self{ shapes: vec![], spheres: vec![], dirty: false, count_uniform, shapes_buffer, spheres_buffer, bind_group }
     }
 
-    pub fn add_sphere(&mut self, sphere:Sphere, color: Color){
+    pub fn add_sphere(&mut self, sphere:Sphere, color: Color, reflectivity:f32){
         let index = self.spheres.len() as u32;
         self.spheres.push(sphere);
-        self.shapes.push(Shape::new(color, 0, index));
+        self.shapes.push(Shape::new(color, 0, index, reflectivity));
         self.dirty = true;
     }
 

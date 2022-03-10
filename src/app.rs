@@ -11,6 +11,11 @@ use crate::color::Color;
 use crate::shape::ShapeCollection;
 use crate::sphere::Sphere;
 
+const WORKGROUP_SIZE_X: u32 = 16;
+const WORKGROUP_SIZE_Y: u32 = 16;
+const TARGET_TEXTURE_X: u32 = 800;
+const TARGET_TEXTURE_Y: u32 = 800;
+
 pub struct AppState {
     surface: Surface,
     device: Device,
@@ -56,8 +61,8 @@ impl AppState {
         let target_texture = device.create_texture(&TextureDescriptor{
             label: Some("Target texture"),
             size: Extent3d{
-                width: 800,
-                height: 800,
+                width: TARGET_TEXTURE_X,
+                height: TARGET_TEXTURE_Y,
                 depth_or_array_layers: 1
             },
             mip_level_count: 1,
@@ -124,8 +129,12 @@ impl AppState {
 
         let mut shape_collection = ShapeCollection::new(&device);
         for _ in 0..20 {
-            shape_collection.add_sphere(Sphere::new_rand([-10.0, -10.0, 20.0], [10.0, 10.0, 60.0], 0.1, 2.0), Color::random())
+            shape_collection.add_sphere(Sphere::new_rand([-10.0, -10.0, 20.0], [10.0, 10.0, 60.0], 0.1, 2.0), Color::random(), 0.0);
         }
+
+        shape_collection.add_sphere(Sphere::new([0.0, 0.0, 30.0], 3.0), Color(0.2,0.2,0.2), 0.9);
+        shape_collection.add_sphere(Sphere::new([0.0, 4.0, 25.0], 1.0), Color(0.2,0.2,0.2), 0.9);
+
         shape_collection.update_buffers(&queue);
 
         Self {
@@ -200,7 +209,7 @@ impl AppState {
             compute_pass.set_pipeline(&self.render_pipeline);
             compute_pass.set_bind_group(0,&self.target_texture_bind_group,&[]);
             compute_pass.set_bind_group(1, self.shape_collection.bind_group(),&[]);
-            compute_pass.dispatch(self.size.width, self.size.height, 1)
+            compute_pass.dispatch(TARGET_TEXTURE_X/WORKGROUP_SIZE_X, TARGET_TEXTURE_Y/WORKGROUP_SIZE_Y, 1)
 
         }
         {
