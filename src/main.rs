@@ -31,12 +31,17 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                     WindowEvent::KeyboardInput { input:KeyboardInput {state: ElementState::Pressed, virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..} => {
                         *control_flow = ControlFlow::Exit;
                     }
+                    WindowEvent::KeyboardInput { input: winit::event::KeyboardInput{ virtual_keycode:Some(winit::event::VirtualKeyCode::R), ..},.. } => {
+                        window.request_redraw();
+                    }
                     // Handle resizing
                     WindowEvent::Resized(size) =>{
                         app.resize(size);
+                        window.request_redraw();
                     }
                     WindowEvent::ScaleFactorChanged{new_inner_size, ..} =>{
                         app.resize(*new_inner_size);
+                        window.request_redraw();
                     }
                     _ => {}
                 }
@@ -54,7 +59,6 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                 }
             },
             Event::RedrawEventsCleared | Event::MainEventsCleared => {
-                window.request_redraw();
             }
             // Any other event is ignore
             _ => {}
