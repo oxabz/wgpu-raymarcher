@@ -29,8 +29,8 @@ fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
     return distance(a,b.pos) - b.radius;
 };
 
-fn sphere_lighting(point: vec3<f32>, light_direction:vec3<f32>, sphere:Sphere)->f32{
-    return max(dot(normalize(light_direction),normalize(point-sphere.pos)),0.0);
+fn sphere_normal(point: vec3<f32>, sphere:Sphere)->vec3<f32>{
+    return normalize(point - sphere.pos);
 };
 
 fn shape_distance(pos: vec3<f32>, index:u32)-> f32{
@@ -47,15 +47,15 @@ fn shape_distance(pos: vec3<f32>, index:u32)-> f32{
     return ret;
 };
 
-fn shape_lighting(point: vec3<f32>, light_direction:vec3<f32>, index:u32)-> f32{
+fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     let shape = shapes[index];
-    var ret : f32 = 0.0;
+    var ret : vec3<f32>;
     switch(shape.shape_type){
         case 0u:{
-            ret = sphere_lighting(point, light_direction, spheres[shape.index]);
+            ret = sphere_normal(point, spheres[shape.index]);
         }
         default:{
-            ret = 0.0;
+            ret = vec3<f32>(0.0, 0.0, 0.0);
         }
     }
     return ret;
@@ -65,6 +65,7 @@ struct RayParams{
     max_length: f32;
     max_step: u32;
     threshold: f32;
+    skip_shape: i32;
 };
 
 struct Hit{
@@ -84,11 +85,13 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     let threshold = params.threshold;
     let max_step = params.max_step;
     let max_length = params.max_length;
+    let skip_shape = params.skip_shape;
     res.hit_shape = -1;
     loop {
         var closest_distance : f32= 9999999999.0;
         closest_shape = -1;
         for(var i:u32 = 0u; i < shape_count.count && threshold < closest_distance; i=i+1u){
+            if i32(i) == skip_shape{continue;}
             let shape_dist = shape_distance(ray_pos, i);
             if(closest_distance > shape_dist){
                 closest_shape = i32(i);
@@ -126,8 +129,8 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let step_cap = 100u;
     let render_distance = 2000.0;
     let hit_threshold = 0.01;
-    let background_color = vec4<f32>(0.05, 0.0, 0.1, 1.0);
-    let light_direction = vec3<f32>(-1.0, -1.0, -0.2);
+    let background_color = vec3<f32>(0.02, 0.0, 0.05);
+    let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
 
     let shape_count = 5u;
 
@@ -139,14 +142,27 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     ray.max_length = render_distance;
     ray.max_step = step_cap;
     ray.threshold = hit_threshold;
+    ray.skip_shape = -1;
 
-    var color: vec4<f32> = vec4<f32>(0.0,0.0,0.0,0.0);
+    var color: vec3<f32> = vec3<f32>(0.0,0.0,0.0);
     let hit = send_ray(vec3<f32>(0.0,0.0,0.0), ray_direction, ray);
-
     if(hit.hit_shape < 0){
         color = background_color;
     }else{
-        color = vec4<f32>(shapes[hit.hit_shape].color, 1.0);
+        // Fetching the right color
+        color = vec3<f32>(shapes[hit.hit_shape].color);
+
+        // Applying mat lighting
+        let self_oclusion = max(0.0,-dot(light_direction, shape_normal(hit.hit_pos,u32(hit.hit_shape))));
+        if (self_oclusion>0.00001){
+            var light_ray : RayParams;
+            light_ray.max_length = 20.0;
+            light_ray.max_step = 200u;
+            light_ray.threshold = 0.001;
+            light_ray.skip_shape = hit.hit_shape;
+            let light_hit = send_ray(hit.hit_pos, -light_direction, light_ray);
+        }
+        color = color * self_oclusion * f32(-min(0, light_hit.hit_shape));
     }
-    textureStore(target_texture, vec2<i32>(i32(x),i32(y)), color);
+    textureStore(target_texture, vec2<i32>(i32(x),i32(y)), vec4<f32>(color,1.0));
 }

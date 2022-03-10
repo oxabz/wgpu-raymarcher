@@ -1,5 +1,6 @@
 use std::thread::sleep;
 use std::time::Duration;
+use pollster::block_on;
 use stopwatch::Stopwatch;
 use wgpu::{AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindingResource, Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline, Device, Extent3d, FilterMode, IndexFormat, PipelineLayoutDescriptor, Queue, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, SamplerDescriptor, ShaderModuleDescriptor, Surface, SurfaceConfiguration, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, TextureViewDimension, VertexBufferLayout};
 use wgpu::BindingType::Texture;
@@ -215,10 +216,13 @@ impl AppState {
             compute_pass.draw_indexed(0..6,0,0..1)
         }
         let stopwatch = Stopwatch::start_new();
+        let done = self.queue.on_submitted_work_done();
         self.queue.submit(Some(encoder.finish()));
         output.present();
+        block_on(done);
         println!("frame_duration : {}", stopwatch.elapsed_ms());
-        sleep(Duration::from_millis(66));
+        sleep(Duration::from_millis(4000));
+        println!("sleep_duration : {}", stopwatch.elapsed_ms());
         Ok(())
     }
 
