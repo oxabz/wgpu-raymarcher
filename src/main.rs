@@ -1,10 +1,8 @@
 mod app;
 mod sphere;
 mod shape;
+mod color;
 
-use std::thread::sleep;
-use std::time::Duration;
-use stopwatch::Stopwatch;
 use winit::event::{ElementState, Event, VirtualKeyCode};
 use winit::event::WindowEvent;
 use winit::event::KeyboardInput;
@@ -12,11 +10,9 @@ use winit::event_loop::EventLoop;
 use winit::window::Window;
 use winit::event_loop::ControlFlow;
 use crate::app::AppState;
-use crate::shape::Shape;
 
 async fn run(event_loop: EventLoop<()>, window:Window) {
     let mut app = AppState::new(&window).await;
-    let mut stopwatch = Stopwatch::start_new();
 
     event_loop.run(move |event, _, control_flow|{
         match event {

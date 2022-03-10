@@ -3,6 +3,7 @@ use std::num::NonZeroU32;
 use bytemuck::{Contiguous, Pod, Zeroable};
 use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutEntry, BindingResource, BindingType, BufferBinding, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Device, Queue, ShaderStages};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use crate::color::Color;
 use crate::sphere::Sphere;
 
 const SHAPE_CAPACITY: u64 = 32;
@@ -10,7 +11,7 @@ const SHAPE_CAPACITY: u64 = 32;
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct Shape {
-    color: [f32;3],
+    color: Color,
     shape_type: u32,
     index:u32,
     _pad:[f32;3]
@@ -21,7 +22,7 @@ pub struct Shape {
 pub struct ShapeCount (u32);
 
 impl Shape {
-    pub fn new( color: [f32;3], shape_type:u32, index:u32 )->Self{
+    pub fn new( color: Color, shape_type:u32, index:u32 )->Self{
         Self{
             color,
             shape_type,
@@ -70,7 +71,7 @@ impl ShapeCollection {
         Self{ shapes: vec![], spheres: vec![], dirty: false, count_uniform, shapes_buffer, spheres_buffer, bind_group }
     }
 
-    pub fn add_sphere(&mut self, sphere:Sphere, color: [f32;3]){
+    pub fn add_sphere(&mut self, sphere:Sphere, color: Color){
         let index = self.spheres.len() as u32;
         self.spheres.push(sphere);
         self.shapes.push(Shape::new(color, 0, index));

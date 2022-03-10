@@ -1,13 +1,13 @@
 use std::thread::sleep;
 use std::time::Duration;
 use pollster::block_on;
-use stopwatch::Stopwatch;
 use wgpu::{AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindingResource, Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline, Device, Extent3d, FilterMode, IndexFormat, PipelineLayoutDescriptor, Queue, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, SamplerDescriptor, ShaderModuleDescriptor, Surface, SurfaceConfiguration, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, TextureViewDimension, VertexBufferLayout};
 use wgpu::BindingType::Texture;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
 use winit::window::Window;
+use crate::color::Color;
 use crate::shape::ShapeCollection;
 use crate::sphere::Sphere;
 
@@ -120,12 +120,12 @@ impl AppState {
             ]
         });
 
+
+
         let mut shape_collection = ShapeCollection::new(&device);
-        shape_collection.add_sphere(Sphere::new([0.0, 0.0, 20.0], 1.5), [1.0, 0.0, 1.0]);
-        shape_collection.add_sphere(Sphere::new([1.0, 0.0, 20.0], 1.0), [1.0, 0.0, 0.0]);
-        shape_collection.add_sphere(Sphere::new([-1.0, 0.0, 20.0], 1.0), [0.0, 0.0, 1.0]);
-        shape_collection.add_sphere(Sphere::new([0.0, 1.0, 20.0], 1.0), [1.0, 0.0, 0.0]);
-        shape_collection.add_sphere(Sphere::new([0.0, -1.0, 20.0], 1.0), [0.0, 0.0, 1.0]);
+        for _ in 0..20 {
+            shape_collection.add_sphere(Sphere::new_rand([-10.0, -10.0, 20.0], [10.0, 10.0, 60.0], 0.1, 2.0), Color::random())
+        }
         shape_collection.update_buffers(&queue);
 
         Self {
@@ -215,14 +215,10 @@ impl AppState {
             compute_pass.set_index_buffer(self.indices_buffer.slice(..),IndexFormat::Uint16);
             compute_pass.draw_indexed(0..6,0,0..1)
         }
-        let stopwatch = Stopwatch::start_new();
         let done = self.queue.on_submitted_work_done();
         self.queue.submit(Some(encoder.finish()));
         output.present();
         block_on(done);
-        println!("frame_duration : {}", stopwatch.elapsed_ms());
-        sleep(Duration::from_millis(4000));
-        println!("sleep_duration : {}", stopwatch.elapsed_ms());
         Ok(())
     }
 
