@@ -1,7 +1,7 @@
 mod app;
-mod sphere;
-mod shape;
-mod color;
+mod camera;
+mod shapes;
+pub mod color;
 
 use winit::event::{ElementState, Event, VirtualKeyCode};
 use winit::event::WindowEvent;

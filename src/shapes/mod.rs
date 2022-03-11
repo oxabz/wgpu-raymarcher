@@ -1,10 +1,13 @@
+pub mod sphere;
+
 use std::io::{Bytes, Read};
 use std::num::NonZeroU32;
 use bytemuck::{Contiguous, Pod, Zeroable};
 use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutEntry, BindingResource, BindingType, BufferBinding, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Device, Queue, ShaderStages};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use crate::color::Color;
-use crate::sphere::Sphere;
+use crate::shapes::sphere::Sphere;
+
 
 const SHAPE_CAPACITY: u64 = 32;
 

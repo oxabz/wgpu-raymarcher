@@ -17,13 +17,18 @@ var target_texture: texture_storage_2d<rgba8unorm, write>;
 struct ShapeCount{
     count:u32;
 };
-
 @group(1) @binding(0)
 var<uniform> shape_count: ShapeCount;
 @group(1) @binding(1)
 var<storage> shapes: array<Shape>;
 @group(1) @binding(2)
 var<storage> spheres: array<Sphere>;
+
+struct Camera{
+    ratio:f32;
+};
+@group(2) @binding(0)
+var<uniform> camera: Camera;
 
 
 fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
@@ -128,8 +133,8 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let target_size = textureDimensions(target_texture);
     let x = global_invocation_id.x;
     let y = global_invocation_id.y;
-    let width = target_size[0];
-    let height = target_size[1];
+    let width = f32(target_size[0]);
+    let height = f32(target_size[1]);
 
     let step_cap = 100u;
     let render_distance = 2000.0;
@@ -142,7 +147,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shape_count = 5u;
 
     let depth = 2.0;
-    var ray_direction = normalize(vec3<f32>(-f32(i32(x)-width/2)/f32(width), -f32(i32(y)-height/2)/f32(height), depth));
+    var ray_direction = normalize(vec3<f32>(-(f32(x)-width/2.0)/width/camera.ratio, -(f32(y)-height/2.0)/height, depth));
 
 
     var ray : RayParams;

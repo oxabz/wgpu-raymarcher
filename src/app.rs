@@ -7,9 +7,10 @@ use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
 use winit::window::Window;
+use crate::camera::CameraManager;
 use crate::color::Color;
-use crate::shape::ShapeCollection;
-use crate::sphere::Sphere;
+use crate::shapes::ShapeCollection;
+use crate::shapes::sphere::Sphere;
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
@@ -32,7 +33,8 @@ pub struct AppState {
     target_texture_bind_group: BindGroup,
     copied_texture_bind_group: BindGroup,
 
-    shape_collection: ShapeCollection
+    shape_collection: ShapeCollection,
+    camera_manager: CameraManager
 }
 
 impl AppState {
@@ -137,6 +139,9 @@ impl AppState {
 
         shape_collection.update_buffers(&queue);
 
+        let mut camera_manager = CameraManager::new(&device,size.clone());
+        camera_manager.update_buffers(&queue);
+
         Self {
             surface,
             device,
@@ -153,7 +158,8 @@ impl AppState {
             target_texture_bind_group,
             copied_texture_bind_group,
 
-            shape_collection
+            shape_collection,
+            camera_manager
         }
     }
 
@@ -163,6 +169,7 @@ impl AppState {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             println!("resizes");
+            self.camera_manager.set_size(new_size);
             self.surface.configure(&self.device, &self.config);
         }
     }
@@ -188,6 +195,8 @@ impl AppState {
             }
         };
 
+        self.camera_manager.update_buffers(&self.queue);
+
         //Setup
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
         let color_attachments = [wgpu::RenderPassColorAttachment {
@@ -209,6 +218,7 @@ impl AppState {
             compute_pass.set_pipeline(&self.render_pipeline);
             compute_pass.set_bind_group(0,&self.target_texture_bind_group,&[]);
             compute_pass.set_bind_group(1, self.shape_collection.bind_group(),&[]);
+            compute_pass.set_bind_group(2, self.camera_manager.bind_group(),&[]);
             compute_pass.dispatch(TARGET_TEXTURE_X/WORKGROUP_SIZE_X, TARGET_TEXTURE_Y/WORKGROUP_SIZE_Y, 1)
 
         }
@@ -286,11 +296,12 @@ impl AppState {
             });
 
 
-        let shapes_bind_group =ShapeCollection::bind_group_layout(&device);
+        let shapes_bind_group = ShapeCollection::bind_group_layout(&device);
+        let camera_bind_group = CameraManager::bind_group_layout(&device);
 
         let compute_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor{
             label: Some("Ray Marcher Layout"),
-            bind_group_layouts: &[&target_texture_bind_group_layout, &shapes_bind_group],
+            bind_group_layouts: &[&target_texture_bind_group_layout, &shapes_bind_group, &camera_bind_group],
             push_constant_ranges: &[]
         });
 
