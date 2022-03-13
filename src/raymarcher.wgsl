@@ -79,6 +79,7 @@ struct Hit{
     step_count: u32;
     hit_pos: vec3<f32>;
     ray_length: f32;
+    min_distance: f32;
 };
 
 fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
@@ -87,6 +88,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     var ray_length = 0.0;
     var ray_pos = origin;
     var closest_shape = -1;
+    var closest_distance_g = 9999999999.0;
     //Params
     let threshold = params.threshold;
     let max_step = params.max_step;
@@ -107,6 +109,9 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
         ray_pos += direction * closest_distance;
         ray_length +=  closest_distance;
         step_count += 1u;
+        if (closest_distance < closest_distance_g){
+            closest_distance_g = closest_distance;
+        }
 
         if !( step_count < max_step
                 && threshold < closest_distance
@@ -121,6 +126,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     res.ray_length = ray_length;
     res.step_count = step_count;
     res.hit_pos = ray_pos;
+    res.min_distance = closest_distance_g;
     return res;
 };
 
@@ -142,6 +148,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
 
     let step_cap = 100u;
     let render_distance = 2000.0;
+    let shadow_blur = 5.0;
     let hit_threshold = 0.01;
     let background_color = vec3<f32>(0.02, 0.0, 0.05);
     let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
@@ -186,6 +193,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
 
         let normal = shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
         let diffuse = vcos(normal, -light_direction);
+        matcolor = matcolor * diffuse ;
         // Applying mat lighting
         if (diffuse>0.00001){
             var light_ray : RayParams;
@@ -194,8 +202,8 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             light_ray.threshold = 0.001;
             light_ray.skip_shape = latest_hit.hit_shape;
             let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
+            matcolor = matcolor * min(1.0, shadow_blur * light_hit.min_distance);
         };
-        matcolor = matcolor * diffuse * f32(-min(0, light_hit.hit_shape));
 
         //Specular lighting
         let light_reflection = reflection(light_direction, normal);
