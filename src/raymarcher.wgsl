@@ -124,6 +124,10 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     return res;
 };
 
+fn vcos(a:vec3<f32>, b:vec3<f32>) -> f32{
+    return dot(a,b) /(length(a)*length(b));
+};
+
 fn reflection(incoming:vec3<f32>, normal:vec3<f32>)->vec3<f32>{
     return -2.0*dot(incoming,normal)/dot(normal,normal)*normal+incoming;
 };
@@ -181,9 +185,9 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
         var matcolor = vec3<f32>(shapes[latest_hit.hit_shape].color);
 
         let normal = shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
+        let diffuse = vcos(normal, -light_direction);
         // Applying mat lighting
-        let self_oclusion = max(0.0,-dot(light_direction, normal));
-        if (self_oclusion>0.00001){
+        if (diffuse>0.00001){
             var light_ray : RayParams;
             light_ray.max_length = 20.0;
             light_ray.max_step = 200u;
@@ -191,32 +195,18 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             light_ray.skip_shape = latest_hit.hit_shape;
             let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
         };
-        matcolor = matcolor * self_oclusion * f32(-min(0, light_hit.hit_shape));
+        matcolor = matcolor * diffuse * f32(-min(0, light_hit.hit_shape));
+
+        //Specular lighting
+        let light_reflection = reflection(light_direction, normal);
+        let specular = reflectivity*pow(abs(vcos(light_reflection, ray_direction)),45.0)*max(0.0,diffuse);
+
+        color+=vec3<f32>(specular,specular,specular);
 
         color += matcolor * color_weight * matness;
         color_weight = color_weight * reflectivity;
         ray_direction = reflection(ray_direction, normal);
         bounce_count += 1u;
     }
-    /*
-    let hit = send_ray(vec3<f32>(0.0,0.0,0.0), ray_direction, ray);
-    if(hit.hit_shape < 0){
-        color = background_color;
-    }else{
-        // Fetching the right color
-        color = vec3<f32>(shapes[hit.hit_shape].color);
-
-        // Applying mat lighting
-        let self_oclusion = max(0.0,-dot(light_direction, shape_normal(hit.hit_pos,u32(hit.hit_shape))));
-        if (self_oclusion>0.00001){
-            var light_ray : RayParams;
-            light_ray.max_length = 20.0;
-            light_ray.max_step = 200u;
-            light_ray.threshold = 0.001;
-            light_ray.skip_shape = hit.hit_shape;
-            let light_hit = send_ray(hit.hit_pos, -light_direction, light_ray);
-        }
-        color = color * self_oclusion * f32(-min(0, light_hit.hit_shape));
-    }*/
     textureStore(target_texture, vec2<i32>(i32(x),i32(y)), vec4<f32>(color,1.0));
 }

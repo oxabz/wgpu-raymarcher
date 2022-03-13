@@ -1,7 +1,8 @@
 # Ideas
 
 - [x] Shadows diffuse
-- [ ] Reflection
+- [x] Reflection
 - [ ] Transparency
 - [ ] Composite Shapes (max soft max)
-- [ ] Other
+- [ ] Other shapes
+- [ ] Phong algorythm
