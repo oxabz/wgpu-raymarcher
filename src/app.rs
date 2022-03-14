@@ -307,7 +307,7 @@ impl AppState {
 
         let compute_shader = device.create_shader_module(&ShaderModuleDescriptor{
             label: Some("Ray Marcher Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("raymarcher.wgsl").into())
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/raymarcher.wgsl").into())
         });
 
         let render_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor{
@@ -353,7 +353,7 @@ impl AppState {
 
         let copy_shader = device.create_shader_module(&ShaderModuleDescriptor{
             label: Some("Copy Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("copy.wgsl").into())
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/copy.wgsl").into())
         });
 
         let vertex_buffer_layout = VertexBufferLayout{

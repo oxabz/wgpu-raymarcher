@@ -150,7 +150,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let render_distance = 2000.0;
     let shadow_blur = 5.0;
     let hit_threshold = 0.01;
-    let background_color = vec3<f32>(0.02, 0.0, 0.05);
+    let background_color = vec3<f32>(0.005, 0.0, 0.03);
     let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
     let reflection_rays = 10u;
     let reflection_threshold = 0.01;
