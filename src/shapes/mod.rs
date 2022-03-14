@@ -9,7 +9,7 @@ use crate::color::Color;
 use crate::shapes::sphere::Sphere;
 
 
-const SHAPE_CAPACITY: u64 = 32;
+const SHAPE_CAPACITY: u64 = 64;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]

@@ -25,11 +25,11 @@ var<storage> shapes: array<Shape>;
 var<storage> spheres: array<Sphere>;
 
 struct Camera{
-    ratio:f32;
+    ray_dir : mat3x3<f32>;
 };
+
 @group(2) @binding(0)
 var<uniform> camera: Camera;
-
 
 fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
     return distance(a,b.pos) - b.radius;
@@ -158,7 +158,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shape_count = 5u;
 
     let depth = 2.0;
-    var ray_direction = normalize(vec3<f32>(-(f32(x)-width/2.0)/width/camera.ratio, -(f32(y)-height/2.0)/height, depth));
+    var ray_direction = normalize(vec3<f32>(-f32(x) / width + 0.5, -f32(y) / height + 0.5, 1.0) * camera.ray_dir);
 
 
     var ray : RayParams;

@@ -13,7 +13,7 @@ use crate::app::AppState;
 
 async fn run(event_loop: EventLoop<()>, window:Window) {
     let mut app = AppState::new(&window).await;
-
+    let mut last_frame = std::time::Instant::now();
     event_loop.run(move |event, _, control_flow|{
         match event {
             // Only handle window event
@@ -28,7 +28,6 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                         *control_flow = ControlFlow::Exit;
                     }
                     WindowEvent::KeyboardInput { input: winit::event::KeyboardInput{ virtual_keycode:Some(winit::event::VirtualKeyCode::R), ..},.. } => {
-                        window.request_redraw();
                     }
                     // Handle resizing
                     WindowEvent::Resized(size) =>{
@@ -43,7 +42,9 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                 }
             },
             Event::RedrawRequested(window_id) if window_id == window.id() => {
-                app.update();
+                let delta_t = std::time::Instant::now()-last_frame;
+                last_frame=std::time::Instant::now();
+                app.update(delta_t);
                 match app.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if lost
@@ -55,6 +56,7 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                 }
             },
             Event::RedrawEventsCleared | Event::MainEventsCleared => {
+                window.request_redraw();
             }
             // Any other event is ignore
             _ => {}

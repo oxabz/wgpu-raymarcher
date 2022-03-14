@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutEntry, BindingType, Buffer, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Device, Queue, ShaderStages};
 use winit::dpi::PhysicalSize;
 use bytemuck::{Zeroable,Pod};
@@ -5,12 +6,15 @@ use bytemuck::{Zeroable,Pod};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Zeroable, Pod)]
 struct CameraUniform {
-    ratio:f32
+    ray_dir_mat:[[f32;4];3]
 }
 
 pub struct CameraManager{
     dirty:bool,
     size:PhysicalSize<u32>,
+
+    angle: f32,
+    fov: f32,
 
     camera_uniform:Buffer,
     camera_bind_group:BindGroup
@@ -29,7 +33,7 @@ impl CameraManager {
             ]
         });
 
-        Self{ dirty: false, size, camera_uniform, camera_bind_group }
+        Self{ dirty: false, size, angle:(PI), fov: 0.2, camera_uniform, camera_bind_group }
     }
 
     pub fn set_size(&mut self, size : PhysicalSize<u32>){
@@ -73,10 +77,28 @@ impl CameraManager {
     }
 
     fn generate_uniform(&self)->CameraUniform{
+        let forward = [self.angle.cos(), 0.0, self.angle.sin(),0.0];
+        //let forward = [0.0, 0.0, 1.0,0.0];
+        let up = [0.0, 1.0 , 0.0,0.0];
+        let ratio = self.size.width as f32 / self.size.height as f32;
+        //let right = [forward&[0]*up[0]*ratio, forward[1]*up[1]*ratio, forward[2]*up[2]*ratio, 0.0];
+        //let right = [1.0, 0.0, 0.0,0.0];
+        let right = [(self.angle-PI/2.0).cos() / ratio, 0.0, (self.angle-PI/2.0).sin() / ratio, 0.0];
+
+
         CameraUniform{
-            ratio: self.size.height as f32/self.size.width as f32
+            ray_dir_mat: [right, up, forward]
         }
     }
 
     pub fn bind_group(&self)->&BindGroup{&self.camera_bind_group}
+
+    pub fn angle(&self)->f32{
+        self.angle
+    }
+
+    pub fn set_angle(&mut self, angle:f32){
+        self.angle = angle;
+        self.dirty = true;
+    }
 }

@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::thread::sleep;
 use std::time::Duration;
 use pollster::block_on;
@@ -11,6 +12,8 @@ use crate::camera::CameraManager;
 use crate::color::Color;
 use crate::shapes::ShapeCollection;
 use crate::shapes::sphere::Sphere;
+use rand::SeedableRng;
+use rand::distributions::{Distribution, Uniform};
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
@@ -128,10 +131,11 @@ impl AppState {
         });
 
 
-
+        let mut rng = rand_pcg::Pcg64::seed_from_u64(42);
         let mut shape_collection = ShapeCollection::new(&device);
+        let uniform = Uniform::new(0.0, 0.95);
         for _ in 0..20 {
-            shape_collection.add_sphere(Sphere::new_rand([-10.0, -10.0, 20.0], [10.0, 10.0, 60.0], 0.1, 2.0), Color::random(), 0.0);
+            shape_collection.add_sphere(Sphere::new_rand([-60.0, -10.0, -60.0], [60.0, 10.0, 60.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
         }
 
         shape_collection.add_sphere(Sphere::new([0.0, 0.0, 30.0], 3.0), Color(0.2,0.2,0.2), 0.9);
@@ -179,8 +183,13 @@ impl AppState {
     }
 
 
-    pub(crate) fn update(&mut self) {
+    pub(crate) fn update(&mut self, delta_t:Duration) {
+        println!("delta t : {}",delta_t.as_millis());
 
+        //rotate the camera
+        let angle = self.camera_manager.angle();
+        let rotation_speed = 0.2*PI;
+        self.camera_manager.set_angle(angle+rotation_speed*delta_t.as_secs_f32() + if angle > 2.0 * PI { -2.0 * PI } else { 0.0 });
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
