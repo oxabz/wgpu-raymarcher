@@ -26,6 +26,8 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [ ] Transparency
 - [ ] Composite Shapes (max, soft max, soft min)
 - [ ] Other Shapes
+  - [x] Cube
+  - [ ] Donut
 - [ ] Moving the camera
 - [ ] Tweakable render parameter
 

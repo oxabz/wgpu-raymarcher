@@ -3,6 +3,13 @@ struct Sphere{ //align(16)
     radius : f32; // offset(12) align(4) size(4)
 };
 
+struct Cuboid{ //align(16)
+    pos : vec3<f32>; //offset(0) align(16) size(12)
+    //pad 4
+    scale : vec3<f32>; // offset(16) align(16) size(12)
+    //pad 4
+};
+
 struct Shape{ //align(16)
     color: vec3<f32>; //offset(0) align(16) size(12)
     index: u32; //offset(12) align(4) size(4)
@@ -23,6 +30,8 @@ var<uniform> shape_count: ShapeCount;
 var<storage> shapes: array<Shape>;
 @group(1) @binding(2)
 var<storage> spheres: array<Sphere>;
+@group(1) @binding(3)
+var<storage> cuboids: array<Cuboid>;
 
 struct Camera{
     ray_dir : mat3x3<f32>;
@@ -33,6 +42,36 @@ struct Camera{
 
 @group(2) @binding(0)
 var<uniform> camera: Camera;
+
+fn cube_distance(a:vec3<f32>, b:Cuboid)->f32{
+    let a_centered = a-b.pos;
+    let half_size = b.scale/2.0;
+    let offset = max(abs(a_centered)-half_size, vec3<f32>(0.0,0.0,0.0));
+    return length(offset);
+};
+
+fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
+    let a_centered = a-b.pos;
+    let half_size = b.scale/2.0;
+    if(a_centered[0] >= half_size[0]){
+        return vec3<f32>(1.0,0.0,0.0);
+    }
+    if(a_centered[0] <= -half_size[0]){
+        return vec3<f32>(-1.0,0.0,0.0);
+    }
+    if(a_centered[1] >= half_size[1]){
+        return vec3<f32>(0.0,1.0,0.0);
+    }
+    if(a_centered[1] <= -half_size[1]){
+        return vec3<f32>(0.0,-1.0,0.0);
+    }
+    if(a_centered[2] >= half_size[2]){
+        return vec3<f32>(0.0,0.0,1.0);
+    }
+    else{
+        return vec3<f32>(0.0,0.0,-1.0);
+    }
+};
 
 fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
     return distance(a,b.pos) - b.radius;
@@ -49,6 +88,9 @@ fn shape_distance(pos: vec3<f32>, index:u32)-> f32{
         case 0u:{
             ret = sphere_distance(pos, spheres[shape.index]);
         }
+        case 1u:{
+            ret = cube_distance(pos, cuboids[shape.index]);
+        }
         default:{
             ret = 99999999.0;
         }
@@ -62,6 +104,9 @@ fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     switch(shape.shape_type){
         case 0u:{
             ret = sphere_normal(point, spheres[shape.index]);
+        }
+        case 1u:{
+            ret = cube_normal(point, cuboids[shape.index]);
         }
         default:{
             ret = vec3<f32>(0.0, 0.0, 0.0);

@@ -8,10 +8,11 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 use crate::camera::CameraManager;
 use crate::color::Color;
-use crate::shapes::ShapeCollection;
+use crate::shapes::{cuboid, ShapeCollection};
 use crate::shapes::sphere::Sphere;
 use rand::SeedableRng;
 use rand::distributions::{Distribution, Uniform};
+use crate::shapes::cuboid::Cuboid;
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
@@ -136,7 +137,7 @@ impl AppState {
             shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
         }
 
-        shape_collection.add_sphere(Sphere::new([0.0, 0.0, 0.0], 5.0), Color(0.2,0.2,0.2), 0.95);
+        shape_collection.add_cube(Cuboid::new([0.0, 0.0, 0.0], [2.0,2.0,2.0]), Color(0.2,0.2,0.2), 0.95);
 
         shape_collection.update_buffers(&queue);
 
@@ -242,10 +243,8 @@ impl AppState {
             compute_pass.set_index_buffer(self.indices_buffer.slice(..),IndexFormat::Uint16);
             compute_pass.draw_indexed(0..6,0,0..1)
         }
-        let done = self.queue.on_submitted_work_done();
         self.queue.submit(Some(encoder.finish()));
         output.present();
-        block_on(done);
         Ok(())
     }
 
