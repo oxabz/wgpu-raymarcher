@@ -160,7 +160,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shape_count = 5u;
 
     let depth = 2.0;
-    var ray_direction = normalize(vec3<f32>((-f32(x) / width + 0.5) * camera.ratio, (-f32(y) / height + 0.5), 1.0) * camera.ray_dir);
+    var ray_direction = normalize(vec3<f32>((-f32(x) / width + 0.5) * camera.ratio, (-f32(y) / height + 0.5), camera.depth) * camera.ray_dir);
 
     var ray : RayParams;
     ray.max_length = render_distance;

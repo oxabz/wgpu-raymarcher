@@ -17,7 +17,7 @@ pub struct CameraManager{
     size:PhysicalSize<u32>,
 
     angle: f32,
-    fov: f32,
+    screen_depth: f32,
 
     camera_uniform:Buffer,
     camera_bind_group:BindGroup
@@ -36,7 +36,7 @@ impl CameraManager {
             ]
         });
 
-        Self{ dirty: false, size, angle:(PI), fov: 0.2, camera_uniform, camera_bind_group }
+        Self{ dirty: false, size, angle:(PI), screen_depth: 2.0, camera_uniform, camera_bind_group }
     }
 
     pub fn set_size(&mut self, size : PhysicalSize<u32>){
@@ -80,19 +80,20 @@ impl CameraManager {
     }
 
     fn generate_uniform(&self)->CameraUniform{
-        let forward = [self.angle.cos(), 0.0, self.angle.sin(),0.0];
-        //let forward = [0.0, 0.0, 1.0,0.0];
-        let up = [0.0, 1.0 , 0.0,0.0];
-        let ratio = self.size.width as f32 / self.size.height as f32;
-        //let right = [forward&[0]*up[0]*ratio, forward[1]*up[1]*ratio, forward[2]*up[2]*ratio, 0.0];
-        //let right = [1.0, 0.0, 0.0,0.0];
-        let right = [(self.angle-PI/2.0).cos(), 0.0, (self.angle-PI/2.0).sin(), 0.0];
+        let forward = self.forward();
+        let up = self.up();
+        let ratio = self.aspect_ratio();
+        let right = self.right();
 
 
         CameraUniform{
-            ray_dir_mat: [right, up, forward],
+            ray_dir_mat: [
+                [right[0], right[1], right[2], 0.0],
+                [up[0], up[1], up[2], 0.0],
+                [forward[0], forward[1], forward[2], 0.0]
+            ],
             ratio,
-            depth: 1.0,
+            depth: self.screen_depth,
             _pad: [0.0, 0.0]
         }
     }
@@ -107,4 +108,29 @@ impl CameraManager {
         self.angle = angle;
         self.dirty = true;
     }
+
+    pub fn forward(&self)->[f32;3]{
+        [self.angle.cos(), 0.0, self.angle.sin()]
+    }
+
+    pub fn right(&self)->[f32;3]{
+        [(self.angle-PI/2.0).cos(), 0.0, (self.angle-PI/2.0).sin()]
+    }
+
+    pub fn up(&self)-> [f32;3]{
+        [0.0, 1.0, 0.0]
+    }
+
+    pub fn aspect_ratio(&self) -> f32{
+        self.size.width as f32 / self.size.height as f32
+    }
+
+    pub fn screen_depth(&self) -> f32{
+        self.screen_depth
+    }
+
+    pub fn set_screen_depth(&mut self, depth:f32){
+        self.screen_depth = depth;
+    }
+
 }
