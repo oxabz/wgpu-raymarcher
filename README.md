@@ -24,7 +24,7 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [x] Reflection 
 - [x] Shadows
 - [ ] Transparency
-- [ ] Composite Shapes (max, soft max, soft min)
+- [ ] Composite Shapes (union, intersection, difference)
 - [ ] Other Shapes
   - [x] Cube
   - [ ] Donut

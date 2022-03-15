@@ -46,8 +46,13 @@ var<uniform> camera: Camera;
 fn cube_distance(a:vec3<f32>, b:Cuboid)->f32{
     let a_centered = a-b.pos;
     let half_size = b.scale/2.0;
-    let offset = max(abs(a_centered)-half_size, vec3<f32>(0.0,0.0,0.0));
-    return length(offset);
+    let offset = abs(a_centered)-half_size;
+    var sign = 1.0;
+    if offset[0]<0.0 && offset[1]<0.0 && offset[2]<0.0{
+        return -length(offset);
+    }else{
+        return length(max(offset, vec3<f32>(0.0,0.0,0.0)));
+    }
 };
 
 fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
