@@ -137,7 +137,7 @@ impl AppState {
             shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
         }
 
-        shape_collection.add_cube(Cuboid::new([0.0, 0.0, 0.0], [2.0,2.0,2.0]), Color(0.2,0.2,0.2), 0.95);
+        shape_collection.add_cube(Cuboid::new([0.0, 0.0, 0.0], [2.0,2.0,2.0], [PI/4.0, 0.0, 0.0]), Color(0.2,0.2,0.2), 0.95);
 
         shape_collection.update_buffers(&queue);
 

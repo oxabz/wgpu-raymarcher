@@ -12,6 +12,7 @@ pub struct Cuboid{
     _pad1:[f32;1],
     scaling: [f32;3],
     _pad2:[f32;1],
+    rotation:[[f32;4];3]
 }
 
 lazy_static!{
@@ -19,12 +20,19 @@ lazy_static!{
 }
 
 impl Cuboid {
-    pub fn new(position: [f32;3], scaling: [f32;3])-> Self{
+    pub fn new(position: [f32;3], scaling: [f32;3], euler: [f32;3])-> Self{
+        let [a,b,c] = euler;
+        let rotation = [
+            [b.cos()*c.cos(), a.sin()*b.sin()*c.cos()-a.cos()*c.sin(), a.cos()*b.sin()*c.cos()+a.sin()*c.sin() ,0.0],
+            [b.cos()*c.sin(), a.sin()*b.sin()*c.sin()+a.cos()*c.cos(), a.cos()*b.sin()*c.sin()-a.sin()*c.cos() ,0.0],
+            [-b.sin(), a.sin()*b.cos(),a.cos()*b.cos(),0.0],
+        ];
         Self{
             position,
             scaling,
             _pad1:[0.0],
             _pad2:[0.0],
+            rotation
         }
     }
     pub fn new_rand(a:[f32; 3], b:[f32; 3], c:[f32; 3], d:[f32; 3])->Self{
@@ -35,11 +43,6 @@ impl Cuboid {
         let sx = Uniform::new(c[0], d[0]).sample(rng);
         let sy = Uniform::new(c[1], d[1]).sample(rng);
         let sz = Uniform::new(c[2], d[2]).sample(rng);
-        Self{
-            position: [x,y,z],
-            _pad1: [0.0],
-            scaling: [sx, sy, sz],
-            _pad2: [0.0]
-        }
+        Self::new([x,y,z], [sx,sy,sz], [0.0,0.0,0.0])
     }
 }

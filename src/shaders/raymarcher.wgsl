@@ -8,6 +8,7 @@ struct Cuboid{ //align(16)
     //pad 4
     scale : vec3<f32>; // offset(16) align(16) size(12)
     //pad 4
+    rotation : mat3x3<f32>; // ofset(32) align(16) size(48)
 };
 
 struct Shape{ //align(16)
@@ -45,8 +46,9 @@ var<uniform> camera: Camera;
 
 fn cube_distance(a:vec3<f32>, b:Cuboid)->f32{
     let a_centered = a-b.pos;
+    let a_rotated = a_centered*b.rotation;
     let half_size = b.scale/2.0;
-    let offset = abs(a_centered)-half_size;
+    let offset = abs(a_rotated)-half_size;
     var sign = 1.0;
     if offset[0]<0.0 && offset[1]<0.0 && offset[2]<0.0{
         return -length(offset);
@@ -57,20 +59,21 @@ fn cube_distance(a:vec3<f32>, b:Cuboid)->f32{
 
 fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
     let a_centered = a-b.pos;
+    let a_rotated = a_centered*b.rotation;
     let half_size = b.scale/2.0;
-    if(a_centered[0] >= half_size[0]){
+    if(a_rotated[0] >= half_size[0]){
         return vec3<f32>(1.0,0.0,0.0);
     }
-    if(a_centered[0] <= -half_size[0]){
+    if(a_rotated[0] <= -half_size[0]){
         return vec3<f32>(-1.0,0.0,0.0);
     }
-    if(a_centered[1] >= half_size[1]){
+    if(a_rotated[1] >= half_size[1]){
         return vec3<f32>(0.0,1.0,0.0);
     }
-    if(a_centered[1] <= -half_size[1]){
+    if(a_rotated[1] <= -half_size[1]){
         return vec3<f32>(0.0,-1.0,0.0);
     }
-    if(a_centered[2] >= half_size[2]){
+    if(a_rotated[2] >= half_size[2]){
         return vec3<f32>(0.0,0.0,1.0);
     }
     else{
