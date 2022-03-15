@@ -37,7 +37,7 @@ One of the main difference is that the App struct doesn't directly own the buffe
 
 ## Pipelines
 
-![](/home/n7student/perso-projet/raymarcher/ray-marcher.svg)
+![](./ray-marcher.svg)
 
 > **Note** : this pipeline architecture might be wrong it seems that the whole ray marcher could be done in  the fragment stage.
 > I was mistaken in thinking that the fragment stage only acted on fragment within vertices.
