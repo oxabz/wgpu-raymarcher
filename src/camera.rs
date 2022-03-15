@@ -6,7 +6,10 @@ use bytemuck::{Zeroable,Pod};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Zeroable, Pod)]
 struct CameraUniform {
-    ray_dir_mat:[[f32;4];3]
+    ray_dir_mat:[[f32;4];3],
+    ratio: f32,
+    depth:f32,
+    _pad:[f32;2]
 }
 
 pub struct CameraManager{
@@ -83,11 +86,14 @@ impl CameraManager {
         let ratio = self.size.width as f32 / self.size.height as f32;
         //let right = [forward&[0]*up[0]*ratio, forward[1]*up[1]*ratio, forward[2]*up[2]*ratio, 0.0];
         //let right = [1.0, 0.0, 0.0,0.0];
-        let right = [(self.angle-PI/2.0).cos() / ratio, 0.0, (self.angle-PI/2.0).sin() / ratio, 0.0];
+        let right = [(self.angle-PI/2.0).cos(), 0.0, (self.angle-PI/2.0).sin(), 0.0];
 
 
         CameraUniform{
-            ray_dir_mat: [right, up, forward]
+            ray_dir_mat: [right, up, forward],
+            ratio,
+            depth: 1.0,
+            _pad: [0.0, 0.0]
         }
     }
 

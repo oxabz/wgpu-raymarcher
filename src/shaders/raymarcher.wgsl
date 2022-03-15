@@ -26,6 +26,8 @@ var<storage> spheres: array<Sphere>;
 
 struct Camera{
     ray_dir : mat3x3<f32>;
+    ratio : f32;
+    depth : f32;
 };
 
 @group(2) @binding(0)
@@ -147,7 +149,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let height = f32(target_size[1]);
 
     let step_cap = 100u;
-    let render_distance = 2000.0;
+    let render_distance = 100.0;
     let shadow_blur = 5.0;
     let hit_threshold = 0.01;
     let background_color = vec3<f32>(0.005, 0.0, 0.03);
@@ -158,8 +160,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shape_count = 5u;
 
     let depth = 2.0;
-    var ray_direction = normalize(vec3<f32>(-f32(x) / width + 0.5, -f32(y) / height + 0.5, 1.0) * camera.ray_dir);
-
+    var ray_direction = normalize(vec3<f32>((-f32(x) / width + 0.5) * camera.ratio, (-f32(y) / height + 0.5), 1.0) * camera.ray_dir);
 
     var ray : RayParams;
     ray.max_length = render_distance;
@@ -176,7 +177,6 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     loop {
         if (bounce_count >= reflection_rays || color_weight<reflection_threshold){
             color = color * (1.0/(1.0-color_weight));
-            //color += background_color * color_weight;
             break;
         }
         ray.skip_shape = latest_hit.hit_shape;
