@@ -26,6 +26,7 @@ var<storage> spheres: array<Sphere>;
 
 struct Camera{
     ray_dir : mat3x3<f32>;
+    position: vec3<f32>;
     ratio : f32;
     depth : f32;
 };
@@ -171,7 +172,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     var color: vec3<f32> = vec3<f32>(0.0,0.0,0.0);
     var color_weight:f32 = 1.0;
     var latest_hit:Hit;
-    latest_hit.hit_pos = vec3<f32>(0.0,0.0,0.0);
+    latest_hit.hit_pos = camera.position;
     latest_hit.hit_shape = -1;
     var bounce_count = 0u;
     loop {

@@ -1,9 +1,7 @@
 pub mod sphere;
 
-use std::io::{Bytes, Read};
-use std::num::NonZeroU32;
-use bytemuck::{Contiguous, Pod, Zeroable};
-use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutEntry, BindingResource, BindingType, BufferBinding, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Device, Queue, ShaderStages};
+use bytemuck::{Pod, Zeroable};
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutEntry, BindingType, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Device, Queue, ShaderStages};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use crate::color::Color;
 use crate::shapes::sphere::Sphere;
@@ -127,7 +125,7 @@ impl ShapeCollection {
         &self.bind_group
     }
 
-    pub fn bind_group_layout(device:&Device) -> (wgpu::BindGroupLayout){
+    pub fn bind_group_layout(device:&Device) -> wgpu::BindGroupLayout{
         let bind_group_layout = wgpu::BindGroupLayoutDescriptor {
             label: Some("ShapesBindGroupLayout"),
             entries: &[

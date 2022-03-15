@@ -1,9 +1,7 @@
 use std::f32::consts::PI;
-use std::thread::sleep;
 use std::time::Duration;
 use pollster::block_on;
-use wgpu::{AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindingResource, Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline, Device, Extent3d, FilterMode, IndexFormat, PipelineLayoutDescriptor, Queue, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, SamplerDescriptor, ShaderModuleDescriptor, Surface, SurfaceConfiguration, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, TextureViewDimension, VertexBufferLayout};
-use wgpu::BindingType::Texture;
+use wgpu::{AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindingResource, Buffer, BufferUsages, ComputePassDescriptor, ComputePipeline, Device, Extent3d, FilterMode, IndexFormat, PipelineLayoutDescriptor, Queue, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, SamplerDescriptor, ShaderModuleDescriptor, Surface, SurfaceConfiguration, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, TextureViewDimension, VertexBufferLayout};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
@@ -135,11 +133,10 @@ impl AppState {
         let mut shape_collection = ShapeCollection::new(&device);
         let uniform = Uniform::new(0.0, 0.95);
         for _ in 0..20 {
-            shape_collection.add_sphere(Sphere::new_rand([-60.0, -10.0, -60.0], [60.0, 10.0, 60.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
+            shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
         }
 
-        shape_collection.add_sphere(Sphere::new([0.0, 0.0, 30.0], 3.0), Color(0.2,0.2,0.2), 0.9);
-        shape_collection.add_sphere(Sphere::new([0.0, 4.0, 25.0], 1.0), Color(0.2,0.2,0.2), 0.9);
+        shape_collection.add_sphere(Sphere::new([0.0, 0.0, 0.0], 5.0), Color(0.2,0.2,0.2), 0.95);
 
         shape_collection.update_buffers(&queue);
 
@@ -178,7 +175,7 @@ impl AppState {
         }
     }
 
-    pub(crate) fn input(&mut self, event: &WindowEvent) -> bool {
+    pub(crate) fn input(&mut self, _event: &WindowEvent) -> bool {
         false
     }
 
@@ -190,6 +187,8 @@ impl AppState {
         let angle = self.camera_manager.angle();
         let rotation_speed = 0.2*PI;
         self.camera_manager.set_angle(angle+rotation_speed*delta_t.as_secs_f32() + if angle > 2.0 * PI { -2.0 * PI } else { 0.0 });
+        self.camera_manager.set_position(self.camera_manager.forward() * -20.0);
+        println!("Forward : {}; Up : {}; Right : {}", self.camera_manager.forward(), self.camera_manager.up(), self.camera_manager.right());
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

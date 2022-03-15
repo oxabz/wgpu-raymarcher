@@ -7,15 +7,17 @@ use bytemuck::{Zeroable,Pod};
 #[derive(Copy, Clone, Debug, Zeroable, Pod)]
 struct CameraUniform {
     ray_dir_mat:[[f32;4];3],
+    position:[f32;3],
     ratio: f32,
     depth:f32,
-    _pad:[f32;2]
+    _pad:[f32;3]
 }
 
 pub struct CameraManager{
     dirty:bool,
     size:PhysicalSize<u32>,
 
+    position:ndarray::Array1<f32>,
     angle: f32,
     screen_depth: f32,
 
@@ -36,7 +38,7 @@ impl CameraManager {
             ]
         });
 
-        Self{ dirty: false, size, angle:(PI), screen_depth: 2.0, camera_uniform, camera_bind_group }
+        Self{ dirty: false, size, position: ndarray::Array1::zeros(3), angle:0.0, screen_depth: 2.0, camera_uniform, camera_bind_group }
     }
 
     pub fn set_size(&mut self, size : PhysicalSize<u32>){
@@ -83,18 +85,19 @@ impl CameraManager {
         let forward = self.forward();
         let up = self.up();
         let ratio = self.aspect_ratio();
-        let right = self.right();
+        let left = -self.right();
 
 
         CameraUniform{
             ray_dir_mat: [
-                [right[0], right[1], right[2], 0.0],
+                [left[0], left[1], left[2], 0.0],
                 [up[0], up[1], up[2], 0.0],
                 [forward[0], forward[1], forward[2], 0.0]
             ],
+            position: [self.position[0],self.position[1],self.position[2]],
             ratio,
             depth: self.screen_depth,
-            _pad: [0.0, 0.0]
+            _pad: [0.0, 0.0, 0.0]
         }
     }
 
@@ -109,21 +112,22 @@ impl CameraManager {
         self.dirty = true;
     }
 
-    pub fn forward(&self)->[f32;3]{
-        [self.angle.cos(), 0.0, self.angle.sin()]
+    pub fn forward(&self) ->ndarray::Array1<f32>{
+        ndarray::arr1(&[self.angle.cos(), 0.0, self.angle.sin()])
     }
 
-    pub fn right(&self)->[f32;3]{
-        [(self.angle-PI/2.0).cos(), 0.0, (self.angle-PI/2.0).sin()]
+    pub fn right(&self) -> ndarray::Array1<f32>{
+        ndarray::arr1(&[(self.angle-PI/2.0).cos(), 0.0, (self.angle-PI/2.0).sin()])
     }
 
-    pub fn up(&self)-> [f32;3]{
-        [0.0, 1.0, 0.0]
+    pub fn up(&self)-> ndarray::Array1<f32>{
+        ndarray::arr1(&[0.0, 1.0, 0.0])
     }
 
     pub fn aspect_ratio(&self) -> f32{
         self.size.width as f32 / self.size.height as f32
     }
+
 
     pub fn screen_depth(&self) -> f32{
         self.screen_depth
@@ -131,6 +135,16 @@ impl CameraManager {
 
     pub fn set_screen_depth(&mut self, depth:f32){
         self.screen_depth = depth;
+        self.dirty = true;
+    }
+
+    pub fn set_position(&mut self, pos:ndarray::Array1<f32>){
+        if pos.dim() == 3 {
+            self.position = pos;
+            self.dirty = true;
+        }else {
+            panic!("Expected position to be a vector of length 3");
+        }
     }
 
 }
