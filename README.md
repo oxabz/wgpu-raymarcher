@@ -25,6 +25,7 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [x] Shadows
 - [ ] Transparency
 - [x] Composite Shapes (union, intersection, difference)
+  - [ ] Blend
 - [ ] Other Shapes
   - [x] Cube
   - [ ] Donut

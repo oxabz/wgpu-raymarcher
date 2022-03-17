@@ -134,6 +134,16 @@ impl ShapeCollection {
                 self.add_cube(cuboid.clone(), props.clone())
             },
             CompositDescriptor::SPHERE(sphere, props) => self.add_sphere(sphere.clone(),props.clone()),
+            CompositDescriptor::BLEND(a, b, alpha) => {
+                let ai = self.generate_composite(a.borrow(), false);
+                let bi = self.generate_composite(b.borrow(), false);
+                let u = Composit::new(ai, bi, 3, *alpha);
+                let cindex = self.composits.len() as u32;
+                self.composits.push(u);
+                let index = self.shapes.len() as u32;
+                self.shapes.push(Shape::new(Color(0.0, 0.0, 1.0), 9, cindex, 0.0, root as u32));
+                index
+            }
             r => match r {
                 CompositDescriptor::DIFFERENCE(a, b)
                 | CompositDescriptor::INTERSECTION(a, b)
@@ -145,7 +155,7 @@ impl ShapeCollection {
                         CompositDescriptor::INTERSECTION(_, _) => {1}
                         CompositDescriptor::DIFFERENCE(_, _) => {2}
                         _ => panic!()
-                    });
+                    },1.0);
                     dbg!(ai);
                     dbg!(bi);
                     let cindex = self.composits.len() as u32;
@@ -153,7 +163,7 @@ impl ShapeCollection {
                     let index = self.shapes.len() as u32;
                     self.shapes.push(Shape::new(Color(0.0, 0.0, 1.0), 9, cindex, 0.0, root as u32));
                     index
-                }
+                },
                 _ => {panic!()}
             }
         }

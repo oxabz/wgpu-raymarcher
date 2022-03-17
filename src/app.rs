@@ -147,20 +147,25 @@ impl AppState {
             visible:false,
             reflectivity:0.0
         };
-        let desc = CompositDescriptor::UNION(
+        /*let desc = CompositDescriptor::UNION(
             Box::new(CompositDescriptor::DIFFERENCE(
                 Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],1.0), props.clone())),
                 Box::new(CompositDescriptor::CUBOID(Cuboid::new([0.0,0.0,0.0],[1.5,1.5,1.5], [0.0,0.0,0.0]),props.clone()))
             )),
             Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],0.5), props.clone()))
-        );
+        );*/
+        let desc = CompositDescriptor::BLEND(
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([1.0,0.0,0.0],1.0), props.clone())),
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([-1.0,0.0,0.0],1.0), props.clone())),
+            2.0
+            );
 
-        //shape_collection.create_composite(&desc);
-        shape_collection.add_cube(Cuboid::new([0.0,0.0,0.0], [1.0,1.0,1.0], [0.0,0.0,0.0]), ShapeProperties{
+        shape_collection.create_composite(&desc);
+        /*shape_collection.add_cube(Cuboid::new([0.0,0.0,0.0], [1.0,1.0,1.0], [0.0,0.0,0.0]), ShapeProperties{
             color: Color::random(),
             reflectivity: 0.0,
             visible: true
-        });
+        });*/
         shape_collection.update_buffers(&queue);
 
         let mut camera_manager = CameraManager::new(&device,size.clone());

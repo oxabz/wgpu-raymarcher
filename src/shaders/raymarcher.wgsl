@@ -15,6 +15,7 @@ struct Composite{ //align(16)
     a:u32;
     b:u32;
     t:u32;
+    alpha:f32;
 };
 
 
@@ -33,6 +34,7 @@ var target_texture: texture_storage_2d<rgba8unorm, write>;
 struct ShapeCount{
     count:u32;
 };
+
 @group(1) @binding(0)
 var<uniform> shape_count: ShapeCount;
 @group(1) @binding(1)
@@ -43,6 +45,10 @@ var<storage> spheres: array<Sphere>;
 var<storage> cuboids: array<Cuboid>;
 @group(1) @binding(4)
 var<storage> composites: array<Composite>;
+
+fn smooth_max(a:f32, b:f32, alpha:f32)->f32{
+    return (a * exp2(a * alpha) + b * exp2(b * alpha))/(exp2(a * alpha) + exp2(b * alpha));
+};
 
 struct Camera{
     ray_dir : mat3x3<f32>;
@@ -226,6 +232,9 @@ fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
                         }
                         case 2u:{
                             add_rstack(max(b,-a));
+                        }
+                        case 3u:{
+                            add_rstack(smooth_max(a,b,-c.alpha));
                         }
                         default:{}
                     }
