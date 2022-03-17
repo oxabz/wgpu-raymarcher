@@ -347,11 +347,11 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let step_cap = 1000000u;
     let render_distance = 100.0;
     let shadow_blur = 5.0;
-    let hit_threshold = 0.01;
+    let hit_threshold = 0.00001;
     let background_color = vec3<f32>(0.005, 0.0, 0.03);
     let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
     let reflection_rays = 10u;
-    let reflection_threshold = 0.01;
+    let reflection_threshold = 0.000001;
 
     let shape_count = 5u;
 
@@ -393,9 +393,9 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
         // Applying mat lighting
         if (diffuse>0.00001){
             var light_ray : RayParams;
-            light_ray.max_length = 20.0;
-            light_ray.max_step = 200u;
-            light_ray.threshold = 0.001;
+            light_ray.max_length = 2000.0;
+            light_ray.max_step = 20000u;
+            light_ray.threshold = 0.0000001;
             light_ray.skip_shape = latest_hit.hit_shape;
             let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
             matcolor = matcolor * min(1.0, shadow_blur * light_hit.min_distance);

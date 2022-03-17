@@ -11,6 +11,7 @@ use winit::window::Window;
 use winit::event_loop::ControlFlow;
 use crate::app::AppState;
 
+
 async fn run(event_loop: EventLoop<()>, window:Window) {
     let mut app = AppState::new(&window).await;
     let mut last_frame = std::time::Instant::now();
@@ -28,6 +29,7 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                         *control_flow = ControlFlow::Exit;
                     }
                     WindowEvent::KeyboardInput { input: winit::event::KeyboardInput{ virtual_keycode:Some(winit::event::VirtualKeyCode::R), ..},.. } => {
+                        window.request_redraw();
                     }
                     // Handle resizing
                     WindowEvent::Resized(size) =>{
@@ -56,7 +58,11 @@ async fn run(event_loop: EventLoop<()>, window:Window) {
                 }
             },
             Event::RedrawEventsCleared | Event::MainEventsCleared => {
-                window.request_redraw();
+                let delta_t = std::time::Instant::now()-last_frame;
+
+                if delta_t.as_millis()<500 {
+                    window.request_redraw();
+                }
             }
             // Any other event is ignore
             _ => {}

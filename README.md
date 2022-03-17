@@ -38,10 +38,73 @@ The architecture of the app is based on the app architecture described in the [w
 
 One of the main difference is that the App struct doesn't directly own the buffer for thing that may need to change (shapes, camera parameters...). The buffer are wrapped in struct that handle the writing to the buffer and only expose writing function and update function.
 
+## Basic Function
+
+Jamie wong as a [blog post about ray marching](http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/) that will explain to you the concept better than I could.
+
 ## Pipelines
 
-![](./ray-marcher.svg)
+![](resources/ray-marcher.svg)
 
 > **Note** : this pipeline architecture might be wrong it seems that the whole ray marcher could be done in  the fragment stage.
 > I was mistaken in thinking that the fragment stage only acted on fragment within vertices.
 
+## Interesting problems
+
+### Representing heterogenous shapes
+
+I wanted to have several types of shape for my renderer but WGSL allows for no polymorphism.
+
+I decided on having a buffer for each type of shape and a buffer of shapes.
+
+The buffer of shape contains the type of the shape and a *"pointer"* to the shape in the other part of the shape. 
+
+![](resources/heterogenous_shapes.svg)
+
+When I need the closest shape, I iterate over the shape buffer, check the type, take the shape in the right buffer and compute the distance. 
+
+### Composite Shapes
+
+*A composit shape rendered with the raymarcher* :
+![](resources/composite_shape.png)
+
+Implementing composite shapes required a bit of tinkering.
+
+The data structure for the job was undoubtedly the tree. 
+
+*The tree representation of the shape above :*
+![](resources/composit_shape_2.svg)
+
+*A quick uml for composite shape :*
+![](resources/composite_shape.svg)
+
+Problem is, there is no way to send trees to the GPU. The only allowed type are buffer and texture(and stuff).
+
+The final solution I settled on was to rely on the pseudo *"polymorphism"* I established for the previous problem.
+
+The elements in the shape buffer points to the right element of the right buffer. 
+Nothing different for the composites except that they point back at the shape buffer. 
+I also added a "skip" attibute to the shape buffer so that they are not drawn independently.
+
+![](resources/composite_shape_3.svg)
+
+Done? Nope. Not at all.
+
+Having a tree is all well and good, but it's no good if you can't go through it.
+
+"Well it's quite trivial, actually. You just have to use recu...". 
+
+Yeah, that was my first thought too. Sadly GPU code doesn't allow for recursion.
+
+No matter let's make a makeshift callstack.
+
+![](resources/composite_shape_4.svg)
+
+## Project result and conclusion
+
+It's a cool project but I'ma put it on hold for now. 
+It would require a major refactor on how I obtain normals.
+Probably gonna look into porting it to wasm but not right now.
+
+I'm kinda burned out on that project(Also finals). 
+That being said still was cool codding it.
