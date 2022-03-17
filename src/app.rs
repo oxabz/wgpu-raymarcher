@@ -17,8 +17,8 @@ use crate::shapes::cuboid::Cuboid;
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
-const TARGET_TEXTURE_X: u32 = 4096;
-const TARGET_TEXTURE_Y: u32 = 4096;
+const TARGET_TEXTURE_X: u32 = 256;
+const TARGET_TEXTURE_Y: u32 = 256;
 
 pub struct AppState {
     surface: Surface,

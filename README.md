@@ -25,12 +25,13 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [x] Shadows
 - [ ] Transparency
 - [x] Composite Shapes (union, intersection, difference)
-  - [ ] Blend
+  - [x] Blend(sort of)
 - [ ] Other Shapes
   - [x] Cube
   - [ ] Donut
 - [x] Moving the camera
 - [ ] Tweakable render parameter
+- [ ] Fix normals
 
 ## Basic Architecture
 
@@ -65,8 +66,11 @@ When I need the closest shape, I iterate over the shape buffer, check the type, 
 
 ### Composite Shapes
 
-*A composit shape rendered with the raymarcher* :
+*A composit shape rendered with the raymarcher :*
+
 ![](resources/composite_shape.png)
+
+> **Unrelated Note :** you can see small spots on the sphere at the center of the shape that one of the artefact of floats accuracy and my computation of normal
 
 Implementing composite shapes required a bit of tinkering.
 
