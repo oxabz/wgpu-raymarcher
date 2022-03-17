@@ -24,11 +24,11 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [x] Reflection 
 - [x] Shadows
 - [ ] Transparency
-- [ ] Composite Shapes (union, intersection, difference)
+- [x] Composite Shapes (union, intersection, difference)
 - [ ] Other Shapes
   - [x] Cube
   - [ ] Donut
-- [ ] Moving the camera
+- [x] Moving the camera
 - [ ] Tweakable render parameter
 
 ## Basic Architecture
