@@ -8,10 +8,11 @@ use winit::event::WindowEvent;
 use winit::window::Window;
 use crate::camera::CameraManager;
 use crate::color::Color;
-use crate::shapes::{cuboid, ShapeCollection};
+use crate::shapes::{cuboid, ShapeCollection, ShapeProperties};
 use crate::shapes::sphere::Sphere;
 use rand::SeedableRng;
 use rand::distributions::{Distribution, Uniform};
+use crate::shapes::composit::CompositDescriptor;
 use crate::shapes::cuboid::Cuboid;
 
 const WORKGROUP_SIZE_X: u32 = 16;
@@ -134,11 +135,27 @@ impl AppState {
         let mut shape_collection = ShapeCollection::new(&device);
         let uniform = Uniform::new(0.0, 0.95);
         for _ in 0..20 {
-            shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), Color::random(), uniform.sample(&mut rng));
+            shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), ShapeProperties{
+                color:Color::random(),
+                visible:true,
+                reflectivity:uniform.sample(&mut rng)
+            });
         }
 
-        shape_collection.add_cube(Cuboid::new([0.0, 0.0, 0.0], [2.0,2.0,2.0], [PI/4.0, 0.0, 0.0]), Color(0.2,0.2,0.2), 0.95);
+        let props = ShapeProperties{
+            color:Color(1.0,1.0,1.0),
+            visible:false,
+            reflectivity:0.0
+        };
+        let desc = CompositDescriptor::UNION(
+            Box::new(CompositDescriptor::DIFFERENCE(
+                Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],1.0), props.clone())),
+                Box::new(CompositDescriptor::CUBOID(Cuboid::new([0.0,0.0,0.0],[1.5,1.5,1.5], [0.0,0.0,0.0]),props.clone()))
+            )),
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],0.5), props.clone()))
+        );
 
+        shape_collection.create_composite(&desc);
         shape_collection.update_buffers(&queue);
 
         let mut camera_manager = CameraManager::new(&device,size.clone());

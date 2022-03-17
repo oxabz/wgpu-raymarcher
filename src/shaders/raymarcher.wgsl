@@ -11,11 +11,19 @@ struct Cuboid{ //align(16)
     rotation : mat3x3<f32>; // ofset(32) align(16) size(48)
 };
 
+struct Composite{ //align(16)
+    a:u32;
+    b:u32;
+    t:u32;
+};
+
+
 struct Shape{ //align(16)
     color: vec3<f32>; //offset(0) align(16) size(12)
     index: u32; //offset(12) align(4) size(4)
     shape_type: u32; //offset(16) align(4) size(4)
     reflectivity: f32; //offset(20) align(4) size(4)
+    visible:u32;
     //padding(8)
 };
 
@@ -33,6 +41,8 @@ var<storage> shapes: array<Shape>;
 var<storage> spheres: array<Sphere>;
 @group(1) @binding(3)
 var<storage> cuboids: array<Cuboid>;
+@group(1) @binding(4)
+var<storage> composites: array<Composite>;
 
 struct Camera{
     ray_dir : mat3x3<f32>;
@@ -86,25 +96,146 @@ fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
 };
 
 fn sphere_normal(point: vec3<f32>, sphere:Sphere)->vec3<f32>{
-    return normalize(point - sphere.pos);
+    if distance(point, sphere.pos) > sphere.radius{
+        return normalize(point - sphere.pos);
+    }else{
+        return normalize(sphere.pos - point);
+    }
 };
 
-fn shape_distance(pos: vec3<f32>, index:u32)-> f32{
-    let shape = shapes[index];
-    var ret : f32 = 0.0;
-    switch(shape.shape_type){
-        case 0u:{
-            ret = sphere_distance(pos, spheres[shape.index]);
-        }
-        case 1u:{
-            ret = cube_distance(pos, cuboids[shape.index]);
-        }
-        default:{
-            ret = 99999999.0;
+var<private> shape_stack: array<i32,20u>;
+var<private> shape_stack_pointer : u32 = 0u;
+var<private> res_stack: array<f32,20u>;
+var<private> res_stack_pointer : u32 = 0u;
+
+fn add_sstack(s: i32){
+    shape_stack[shape_stack_pointer] = s;
+    shape_stack_pointer=shape_stack_pointer+ 1u;
+};
+
+fn pop_sstack()->i32{
+    shape_stack_pointer = shape_stack_pointer - 1u;
+    let res = shape_stack[shape_stack_pointer];
+    return res;
+};
+
+fn add_rstack(s:f32){
+    res_stack[res_stack_pointer] = s;
+    res_stack_pointer = res_stack_pointer+1u;
+};
+fn pop_rstack()->f32{
+    res_stack_pointer = res_stack_pointer - 1u;
+    let res = res_stack[res_stack_pointer];
+    return res;
+};
+
+struct DistRes{
+    distance:f32;
+    index:u32;
+};
+
+fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
+    add_sstack(-i32(root+1u));
+
+    var mdist : f32 = 99999999999.0;
+    var midx: u32 = 0u;
+    var skip_sign = 1.0;
+    loop {
+        if(shape_stack_pointer == 0u){break;}
+
+        let current = pop_sstack();
+        if (current<0){
+            let index = u32(-current) - 1u;
+            let shape = shapes[index];
+
+            add_sstack(i32(index));
+            switch(shape.shape_type){
+                case 9u:{
+                    let c = composites[shape.index];
+                    add_sstack(-i32(c.a+1u));
+                    add_sstack(-i32(c.b+1u));
+                    if(c.t == 2u && i32(c.a) == skip){
+                        skip_sign = -1.0;
+                    }
+                }
+                default:{}
+            }
+        }else{
+            let index = u32(current);
+            let shape = shapes[index];
+
+            switch(shape.shape_type){
+                case 0u:{
+                    var d = sphere_distance(point, spheres[shape.index]);
+                    if (i32(index) == skip){
+                        d = 9999999.0 * skip_sign;
+                    }
+                    if(mdist>abs(d)){
+                        mdist = abs(d);
+                        midx = index;
+                    }
+                    add_rstack(d);
+                }
+                case 1u:{
+                    var d = cube_distance(point, cuboids[shape.index]);
+                    if (i32(index) == skip){
+                        d = 9999999.0 * skip_sign;
+                    }
+                    if(mdist>abs(d)){
+                        mdist = abs(d);
+                        midx = index;
+                    }
+                    add_rstack(d);
+                }
+                case 9u:{
+                    let c = composites[shape.index];
+                    let a = pop_rstack();
+                    let b = pop_rstack();
+                    switch(c.t){
+                        case 0u:{
+                            add_rstack(min(a,b));
+                        }
+                        case 1u:{
+                            add_rstack(max(a,b));
+                            //add_rstack(b);
+                        }
+                        case 2u:{
+                            add_rstack(max(b,-a));
+                        }
+                        default:{}
+                    }
+                }
+                default:{}
+            }
         }
     }
-    return ret;
+    var res: DistRes;
+    res.distance = pop_rstack();
+    res.index = midx;
+    return res;
 };
+/*
+fn shape_distance(point: vec3<f32>, root:u32)-> DistRes{
+    let index = root;
+    let shape = shapes[root];
+    var d = 0.0;
+    switch(shape.shape_type){
+        case 0u:{
+            d = sphere_distance(point, spheres[shape.index]);
+            add_rstack(d);
+        }
+        case 1u:{
+            d = cube_distance(point, cuboids[shape.index]);
+            add_rstack(d);
+        }
+        default:{}
+    }
+    var res: DistRes;
+    res.distance = pop_rstack();
+    res.index = root;
+    return res;
+}*/
+
 
 fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     let shape = shapes[index];
@@ -117,7 +248,7 @@ fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
             ret = cube_normal(point, cuboids[shape.index]);
         }
         default:{
-            ret = vec3<f32>(0.0, 0.0, 0.0);
+            ret = vec3<f32>(1.0, 0.0, 0.0);
         }
     }
     return ret;
@@ -142,7 +273,6 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     var res: Hit;
     var step_count = 0u;
     var ray_length = 0.0;
-    var ray_pos = origin;
     var closest_shape = -1;
     var closest_distance_g = 9999999999.0;
     //Params
@@ -151,19 +281,20 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     let max_length = params.max_length;
     let skip_shape = params.skip_shape;
     res.hit_shape = -1;
+    var ray_pos = origin + direction * threshold * 2.0;
     loop {
-        var closest_distance : f32= 9999999999.0;
+        var closest_distance : f32 = 9999999999.0;
         closest_shape = -1;
         for(var i:u32 = 0u; i < shape_count.count && threshold < closest_distance; i=i+1u){
-            if i32(i) == skip_shape{continue;}
-            let shape_dist = shape_distance(ray_pos, i);
-            if(closest_distance > shape_dist){
-                closest_shape = i32(i);
-                closest_distance = shape_dist;
+            if (i32(i) == skip_shape || shapes[i].visible == 0u){continue;}
+            let shape_dist_r = shape_distance(ray_pos, i, skip_shape);
+            if(closest_distance > shape_dist_r.distance){
+                closest_shape = i32(shape_dist_r.index);
+                closest_distance = shape_dist_r.distance;
             }
         }
         ray_pos += direction * closest_distance;
-        ray_length +=  closest_distance;
+        ray_length += closest_distance;
         step_count += 1u;
         if (closest_distance < closest_distance_g){
             closest_distance_g = closest_distance;
@@ -175,7 +306,6 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
             break;
         }
     }
-
     if(threshold > closest_distance){
         res.hit_shape = closest_shape;
     }
@@ -202,7 +332,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let width = f32(target_size[0]);
     let height = f32(target_size[1]);
 
-    let step_cap = 100u;
+    let step_cap = 1000000u;
     let render_distance = 100.0;
     let shadow_blur = 5.0;
     let hit_threshold = 0.01;
@@ -233,7 +363,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             color = color * (1.0/(1.0-color_weight));
             break;
         }
-        ray.skip_shape = latest_hit.hit_shape;
+        ray.skip_shape = -1;// latest_hit.hit_shape;
         latest_hit = send_ray(latest_hit.hit_pos, ray_direction, ray);
         if (latest_hit.hit_shape < 0){
             color += background_color * color_weight;
