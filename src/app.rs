@@ -17,8 +17,8 @@ use crate::shapes::cuboid::Cuboid;
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
-const TARGET_TEXTURE_X: u32 = 800;
-const TARGET_TEXTURE_Y: u32 = 800;
+const TARGET_TEXTURE_X: u32 = 512;
+const TARGET_TEXTURE_Y: u32 = 512;
 
 pub struct AppState {
     surface: Surface,
@@ -155,7 +155,12 @@ impl AppState {
             Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],0.5), props.clone()))
         );
 
-        shape_collection.create_composite(&desc);
+        //shape_collection.create_composite(&desc);
+        shape_collection.add_cube(Cuboid::new([0.0,0.0,0.0], [1.0,1.0,1.0], [0.0,0.0,0.0]), ShapeProperties{
+            color: Color::random(),
+            reflectivity: 0.0,
+            visible: true
+        });
         shape_collection.update_buffers(&queue);
 
         let mut camera_manager = CameraManager::new(&device,size.clone());

@@ -71,24 +71,49 @@ fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
     let a_centered = a-b.pos;
     let a_rotated = a_centered*b.rotation;
     let half_size = b.scale/2.0;
-    if(a_rotated[0] >= half_size[0]){
-        return vec3<f32>(1.0,0.0,0.0);
+
+    let a_scaled =  a_rotated/half_size;
+    var magnet = vec3<f32>(0.0,0.0,0.0);
+    var distmag = 9999999.0;
+
+    let right = vec3<f32>(1.0,0.0,0.0);
+    let left = vec3<f32>(-1.0,0.0,0.0);
+    let forw = vec3<f32>(0.0,1.0,0.0);
+    let back = vec3<f32>(0.0,-1.0,0.0);
+    let up = vec3<f32>(0.0,0.0,1.0);
+    let down = vec3<f32>(0.0,0.0,-1.0);
+    var d = 0.0;
+    d = distance(a_scaled,right);
+    if(distmag > d){
+        magnet = right;
+        distmag = d;
     }
-    if(a_rotated[0] <= -half_size[0]){
-        return vec3<f32>(-1.0,0.0,0.0);
+    d = distance(a_scaled,left);
+    if(distmag > d){
+        magnet = left;
+        distmag = d;
     }
-    if(a_rotated[1] >= half_size[1]){
-        return vec3<f32>(0.0,1.0,0.0);
+    d = distance(a_scaled,forw);
+    if(distmag > d){
+        magnet = forw;
+        distmag = d;
     }
-    if(a_rotated[1] <= -half_size[1]){
-        return vec3<f32>(0.0,-1.0,0.0);
+    d = distance(a_scaled,back);
+    if(distmag > d){
+        magnet = back;
+        distmag = d;
     }
-    if(a_rotated[2] >= half_size[2]){
-        return vec3<f32>(0.0,0.0,1.0);
+    d = distance(a_scaled,up);
+    if(distmag > d){
+        magnet = up;
+        distmag = d;
     }
-    else{
-        return vec3<f32>(0.0,0.0,-1.0);
+    d = distance(a_scaled,down);
+    if(distmag > d){
+        magnet = down;
+        distmag = d;
     }
+    return magnet;
 };
 
 fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
@@ -96,7 +121,7 @@ fn sphere_distance(a: vec3<f32>, b:Sphere)->f32{
 };
 
 fn sphere_normal(point: vec3<f32>, sphere:Sphere)->vec3<f32>{
-    if distance(point, sphere.pos) > sphere.radius{
+    if distance(point, sphere.pos) >= sphere.radius{
         return normalize(point - sphere.pos);
     }else{
         return normalize(sphere.pos - point);
@@ -214,28 +239,6 @@ fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
     res.index = midx;
     return res;
 };
-/*
-fn shape_distance(point: vec3<f32>, root:u32)-> DistRes{
-    let index = root;
-    let shape = shapes[root];
-    var d = 0.0;
-    switch(shape.shape_type){
-        case 0u:{
-            d = sphere_distance(point, spheres[shape.index]);
-            add_rstack(d);
-        }
-        case 1u:{
-            d = cube_distance(point, cuboids[shape.index]);
-            add_rstack(d);
-        }
-        default:{}
-    }
-    var res: DistRes;
-    res.distance = pop_rstack();
-    res.index = root;
-    return res;
-}*/
-
 
 fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     let shape = shapes[index];
