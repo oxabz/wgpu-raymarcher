@@ -77,9 +77,11 @@ Implementing composite shapes required a bit of tinkering.
 The data structure for the job was undoubtedly the tree. 
 
 *The tree representation of the shape above :*
+
 ![](resources/composit_shape_2.svg)
 
 *A quick uml for composite shape :*
+
 ![](resources/composite_shape.svg)
 
 Problem is, there is no way to send trees to the GPU. The only allowed type are buffer and texture(and stuff).
