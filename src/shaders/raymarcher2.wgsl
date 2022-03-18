@@ -54,6 +54,7 @@ struct RayParams{
 
 struct Hit{
     hit_shape: i32;
+    root_shape: i32;
     step_count: u32;
     hit_pos: vec3<f32>;
     ray_length: f32;
@@ -62,6 +63,12 @@ struct Hit{
 
 struct ShapeCount{
     count:u32;
+};
+
+struct SurfaceInfo{
+    normal:vec3<f32>;
+    color:vec3<f32>;
+    reflectivity:f32;
 };
 
 /////////////////////////////////////////////
@@ -185,17 +192,13 @@ fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
 };
 
 fn sphere_normal(point: vec3<f32>, sphere:Sphere)->vec3<f32>{
-    if distance(point, sphere.pos) >= sphere.radius{
-        return normalize(point - sphere.pos);
-    }else{
-        return normalize(sphere.pos - point);
-    }
+    return normalize(point - sphere.pos);
 };
+
 
 /////////////////////////////////////////////
 // Distance 
 /////////////////////////////////////////////
-
 
 var<private> shape_stack: array<i32,20u>;
 var<private> shape_stack_pointer : u32 = 0u;
@@ -213,6 +216,11 @@ fn pop_sstack()->i32{
     return res;
 };
 
+fn clear_sstack(){
+    shape_stack_pointer = 0u;
+};
+
+
 fn add_rstack(s:f32){
     res_stack[res_stack_pointer] = s;
     res_stack_pointer = res_stack_pointer+1u;
@@ -224,7 +232,14 @@ fn pop_rstack()->f32{
     return res;
 };
 
+fn clear_rstack(){
+    res_stack_pointer = 0u;
+};
+
+
 fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
+    clear_rstack();
+    clear_sstack();
     add_sstack(-i32(root+1u));
 
     var mdist : f32 = 99999999999.0;
@@ -311,6 +326,8 @@ fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
 // Normal 
 /////////////////////////////////////////////
 
+
+
 fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     let shape = shapes[index];
     var ret : vec3<f32>;
@@ -330,6 +347,129 @@ fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
 
 
 /////////////////////////////////////////////
+// Surface 
+/////////////////////////////////////////////
+
+// Note we reuse the shape stack from the distance function
+var<private> sres_stack: array<SurfaceInfo,20u>;
+var<private> sres_stack_pointer : u32 = 0u;
+
+fn add_srstack(s:SurfaceInfo){
+    sres_stack[sres_stack_pointer] = s;
+    sres_stack_pointer = sres_stack_pointer + 1u;
+};
+
+fn pop_srstack()->SurfaceInfo{
+    sres_stack_pointer = sres_stack_pointer - 1u;
+    let res = sres_stack[sres_stack_pointer];
+    return res;
+};
+
+fn clear_srstack(){
+    sres_stack_pointer = 0u;
+};
+
+fn shape_surface(point: vec3<f32>, root:u32)-> SurfaceInfo{
+    clear_rstack();
+    clear_srstack();
+    clear_sstack();
+    add_sstack(-i32(root+1u));
+
+    var mdist : f32 = 99999999999.0;
+    var midx: u32 = 0u;
+    var skip_sign = 1.0;
+    loop {
+        if(shape_stack_pointer == 0u){break;}
+
+        let current = pop_sstack();
+        if (current<0){
+            let index = u32(-current) - 1u;
+            let shape = shapes[index];
+
+            add_sstack(i32(index));
+            switch(shape.shape_type){
+                case 9u:{
+                    let c = composites[shape.index];
+                    add_sstack(-i32(c.a+1u));
+                    add_sstack(-i32(c.b+1u));
+                }
+                default:{}
+            }
+        }else{
+            let index = u32(current);
+            let shape = shapes[index];
+
+            switch(shape.shape_type){
+                case 0u:{
+                    var d = sphere_distance(point, spheres[shape.index]);
+                    var surface_info : SurfaceInfo;
+                    surface_info.color = shape.color;
+                    surface_info.reflectivity = shape.reflectivity;
+                    surface_info.normal = sphere_normal(point, spheres[shape.index]);
+                    add_rstack(d);
+                    add_srstack(surface_info);
+                }
+                case 1u:{
+                    var d = cube_distance(point, cuboids[shape.index]);
+                    var surface_info : SurfaceInfo;
+                    surface_info.color = shape.color;
+                    surface_info.reflectivity = shape.reflectivity;
+                    surface_info.normal = cube_normal(point, cuboids[shape.index]);
+                    add_rstack(d);
+                    add_srstack(surface_info);
+                }
+                case 9u:{
+                    let c = composites[shape.index];
+                    let ad = pop_rstack();
+                    var as = pop_srstack();
+                    let bd = pop_rstack();
+                    let bs = pop_srstack();
+
+                    switch(c.t){
+                        case 0u:{
+                            if(ad<bd){
+                                add_srstack(as);
+                            }else{
+                                add_srstack(bs);
+                            }
+                            add_rstack(min(ad,bd));
+                        }
+                        case 1u:{
+                            if(ad>bd){
+                                add_srstack(as);
+                            }else{
+                                add_srstack(bs);
+                            }
+                            add_rstack(max(ad,bd));
+                        }
+                        case 2u:{
+                            if(-ad>bd){
+                                as.normal = -as.normal;
+                                add_srstack(as);
+                            }else{
+                                add_srstack(bs);
+                            }
+                            add_rstack(max(bd,-ad));
+                        }
+                        case 3u:{
+                            if(ad<bd){
+                                add_srstack(as);
+                            }else{
+                                add_srstack(bs);
+                            }
+                            add_rstack(smooth_max(ad,bd,-c.alpha));
+                        }
+                        default:{}
+                    }
+                }
+                default:{}
+            }
+        }
+    }
+    return pop_srstack();
+};
+
+/////////////////////////////////////////////
 // Ray 
 /////////////////////////////////////////////
 
@@ -338,6 +478,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     var step_count = 0u;
     var ray_length = 0.0;
     var closest_shape = -1;
+    var root_shape = -1;
     var closest_distance_g = 9999999999.0;
     //Params
     let threshold = params.threshold;
@@ -345,7 +486,8 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     let max_length = params.max_length;
     let skip_shape = params.skip_shape;
     res.hit_shape = -1;
-    var ray_pos = origin + direction * threshold * 2.0;
+    res.root_shape = -1;
+    var ray_pos = origin + direction * threshold * 10.0;
     loop {
         var closest_distance : f32 = 9999999999.0;
         closest_shape = -1;
@@ -354,6 +496,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
             let shape_dist_r = shape_distance(ray_pos, i, skip_shape);
             if(closest_distance > shape_dist_r.distance){
                 closest_shape = i32(shape_dist_r.index);
+                root_shape = i32(i);
                 closest_distance = shape_dist_r.distance;
             }
         }
@@ -372,6 +515,7 @@ fn send_ray(origin:vec3<f32>, direction:vec3<f32>, params: RayParams)->Hit{
     }
     if(threshold > closest_distance){
         res.hit_shape = closest_shape;
+        res.root_shape = root_shape;
     }
     res.ray_length = ray_length;
     res.step_count = step_count;
@@ -397,7 +541,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shadow_blur = 5.0;
     let hit_threshold = 0.00001;
     let background_color = vec3<f32>(0.005, 0.0, 0.03);
-    let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
+    let light_direction = normalize(vec3<f32>(-1.0, -1.0, 0.4));
     let reflection_rays = 10u;
     let reflection_threshold = 0.000001;
 
@@ -430,23 +574,25 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             break;
         }
         var s = shapes[latest_hit.hit_shape];
-        let reflectivity = s.reflectivity;
+        var surface_info = shape_surface(latest_hit.hit_pos, u32(latest_hit.root_shape));
+        var matcolor = surface_info.color;
+        let reflectivity = surface_info.reflectivity;
         let matness = 1.0 - reflectivity;
 
-        var matcolor = vec3<f32>(shapes[latest_hit.hit_shape].color);
 
-        let normal = shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
+
+        let normal = surface_info.normal;//shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
         let diffuse = vcos(normal, -light_direction);
         matcolor = matcolor * diffuse ;
         // Applying mat lighting
         if (diffuse>0.00001){
             var light_ray : RayParams;
             light_ray.max_length = 2000.0;
-            light_ray.max_step = 20000u;
+            light_ray.max_step = 200u;
             light_ray.threshold = 0.0000001;
-            light_ray.skip_shape = latest_hit.hit_shape;
+            light_ray.skip_shape = -1;
             let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
-            matcolor = matcolor * min(1.0, shadow_blur * light_hit.min_distance);
+            matcolor = matcolor * max(0.0,-f32(light_hit.hit_shape));
         };
 
         //Specular lighting

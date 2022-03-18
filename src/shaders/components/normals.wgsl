@@ -48,9 +48,5 @@ fn cube_normal(a:vec3<f32>, b:Cuboid)->vec3<f32>{
 };
 
 fn sphere_normal(point: vec3<f32>, sphere:Sphere)->vec3<f32>{
-    if distance(point, sphere.pos) >= sphere.radius{
-        return normalize(point - sphere.pos);
-    }else{
-        return normalize(sphere.pos - point);
-    }
+    return normalize(point - sphere.pos);
 };

@@ -11,7 +11,7 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
     let shadow_blur = 5.0;
     let hit_threshold = 0.00001;
     let background_color = vec3<f32>(0.005, 0.0, 0.03);
-    let light_direction = vec3<f32>(-1.0, -1.0, 0.4);
+    let light_direction = normalize(vec3<f32>(-1.0, -1.0, 0.4));
     let reflection_rays = 10u;
     let reflection_threshold = 0.000001;
 
@@ -44,23 +44,25 @@ fn render(@builtin(global_invocation_id) global_invocation_id: vec3<u32>){
             break;
         }
         var s = shapes[latest_hit.hit_shape];
-        let reflectivity = s.reflectivity;
+        var surface_info = shape_surface(latest_hit.hit_pos, u32(latest_hit.root_shape));
+        var matcolor = surface_info.color;
+        let reflectivity = surface_info.reflectivity;
         let matness = 1.0 - reflectivity;
 
-        var matcolor = vec3<f32>(shapes[latest_hit.hit_shape].color);
 
-        let normal = shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
+
+        let normal = surface_info.normal;//shape_normal(latest_hit.hit_pos,u32(latest_hit.hit_shape));
         let diffuse = vcos(normal, -light_direction);
         matcolor = matcolor * diffuse ;
         // Applying mat lighting
         if (diffuse>0.00001){
             var light_ray : RayParams;
             light_ray.max_length = 2000.0;
-            light_ray.max_step = 20000u;
+            light_ray.max_step = 200u;
             light_ray.threshold = 0.0000001;
-            light_ray.skip_shape = latest_hit.hit_shape;
+            light_ray.skip_shape = -1;
             let light_hit = send_ray(latest_hit.hit_pos, -light_direction, light_ray);
-            matcolor = matcolor * min(1.0, shadow_blur * light_hit.min_distance);
+            matcolor = matcolor * max(0.0,-f32(light_hit.hit_shape));
         };
 
         //Specular lighting

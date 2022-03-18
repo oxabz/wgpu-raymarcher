@@ -1,3 +1,5 @@
+
+
 fn shape_normal(point: vec3<f32>, index:u32)-> vec3<f32>{
     let shape = shapes[index];
     var ret : vec3<f32>;

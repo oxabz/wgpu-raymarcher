@@ -26,6 +26,9 @@
       "title": "Normal",
       "path": "src/shaders/components/normal.wgsl"
     },{
+      "title": "Surface",
+      "path": "src/shaders/components/surface.wgsl"
+    },{
       "title": "Ray",
       "path": "src/shaders/components/ray.wgsl"
     },{

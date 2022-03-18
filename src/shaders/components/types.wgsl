@@ -48,6 +48,7 @@ struct RayParams{
 
 struct Hit{
     hit_shape: i32;
+    root_shape: i32;
     step_count: u32;
     hit_pos: vec3<f32>;
     ray_length: f32;
@@ -56,4 +57,10 @@ struct Hit{
 
 struct ShapeCount{
     count:u32;
+};
+
+struct SurfaceInfo{
+    normal:vec3<f32>;
+    color:vec3<f32>;
+    reflectivity:f32;
 };

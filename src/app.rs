@@ -17,8 +17,8 @@ use crate::shapes::cuboid::Cuboid;
 
 const WORKGROUP_SIZE_X: u32 = 16;
 const WORKGROUP_SIZE_Y: u32 = 16;
-const TARGET_TEXTURE_X: u32 = 256;
-const TARGET_TEXTURE_Y: u32 = 256;
+const TARGET_TEXTURE_X: u32 = 512;
+const TARGET_TEXTURE_Y: u32 = 512;
 
 pub struct AppState {
     surface: Surface,
@@ -134,7 +134,7 @@ impl AppState {
         let mut rng = rand_pcg::Pcg64::seed_from_u64(42);
         let mut shape_collection = ShapeCollection::new(&device);
         let uniform = Uniform::new(0.0, 0.95);
-        for _ in 0..20 {
+        for _ in 0..0 {
             shape_collection.add_sphere(Sphere::new_rand([-20.0, -20.0, -20.0], [20.0, 20.0, 20.0], 0.1, 2.0), ShapeProperties{
                 color:Color::random(),
                 visible:true,
@@ -153,14 +153,16 @@ impl AppState {
                 Box::new(CompositDescriptor::CUBOID(Cuboid::new([0.0,0.0,0.0],[1.5,1.5,1.5], [0.0,0.0,0.0]),props.clone()))
             )),
             Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],0.5), props.clone()))
-        );
-        /*
+        );/*
+        let desc = CompositDescriptor::DIFFERENCE(
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],1.0), props.clone())),
+            Box::new(CompositDescriptor::CUBOID(Cuboid::new([0.0,0.0,0.0],[1.5,1.5,1.5], [0.0,0.0,0.0]),props.clone()))
+        );*/
         let desc = CompositDescriptor::BLEND(
-            Box::new(CompositDescriptor::SPHERE(Sphere::new([1.0,0.0,0.0],1.0), props.clone())),
-            Box::new(CompositDescriptor::SPHERE(Sphere::new([-1.0,0.0,0.0],1.0), props.clone())),
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([1.7,0.0,0.0],2.0), props.clone())),
+            Box::new(CompositDescriptor::SPHERE(Sphere::new([-1.7,0.0,0.0],2.0), props.clone())),
             2.0
-            );
-         */
+        );
 
         shape_collection.create_composite(&desc);
         /*shape_collection.add_cube(Cuboid::new([0.0,0.0,0.0], [1.0,1.0,1.0], [0.0,0.0,0.0]), ShapeProperties{
@@ -172,7 +174,7 @@ impl AppState {
 
         let mut camera_manager = CameraManager::new(&device,size.clone());
         camera_manager.set_angle(PI / 6.0);
-        camera_manager.set_position(-camera_manager.forward() * 10.0);
+        camera_manager.set_position(-camera_manager.forward() * -1000.0);
         camera_manager.update_buffers(&queue);
 
         Self {
@@ -219,7 +221,7 @@ impl AppState {
         let angle = self.camera_manager.angle();
         let rotation_speed = 0.2*PI;
         self.camera_manager.set_angle(angle+rotation_speed*delta_t.as_secs_f32() + if angle > 2.0 * PI { -2.0 * PI } else { 0.0 });
-        self.camera_manager.set_position(self.camera_manager.forward() * -20.0);
+        self.camera_manager.set_position(self.camera_manager.forward() * -12.0);
         println!("Forward : {}; Up : {}; Right : {}", self.camera_manager.forward(), self.camera_manager.up(), self.camera_manager.right());
     }
 
@@ -312,6 +314,7 @@ impl AppState {
             height: size.height,
             present_mode: wgpu::PresentMode::Mailbox,
         };
+        dbg!(adapter.limits());
         surface.configure(&device, &config);
         (surface, device, queue, config)
     }

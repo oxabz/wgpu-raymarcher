@@ -1,4 +1,3 @@
-
 var<private> shape_stack: array<i32,20u>;
 var<private> shape_stack_pointer : u32 = 0u;
 var<private> res_stack: array<f32,20u>;
@@ -15,6 +14,11 @@ fn pop_sstack()->i32{
     return res;
 };
 
+fn clear_sstack(){
+    shape_stack_pointer = 0u;
+};
+
+
 fn add_rstack(s:f32){
     res_stack[res_stack_pointer] = s;
     res_stack_pointer = res_stack_pointer+1u;
@@ -26,7 +30,14 @@ fn pop_rstack()->f32{
     return res;
 };
 
+fn clear_rstack(){
+    res_stack_pointer = 0u;
+};
+
+
 fn shape_distance(point: vec3<f32>, root:u32, skip:i32)-> DistRes{
+    clear_rstack();
+    clear_sstack();
     add_sstack(-i32(root+1u));
 
     var mdist : f32 = 99999999999.0;
