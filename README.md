@@ -104,11 +104,23 @@ No matter let's make a makeshift callstack.
 
 ![](resources/composite_shape_4.svg)
 
-## Project result and conclusion
+### WGSL kinda sucks :
 
-It's a cool project but I'ma put it on hold for now. 
+#### File size
+
+On of the main difficulty of this project is managing the massive shader file.
+Comments and structured code is fine. 
+But when the shader file is 500 lines long it's not sufficient. 
+
+Solution : ``.wgsl.json``. 
+I made a build step that make a singular ``.wgsl`` from smaller ``.wgsl``s and a ``.wgsl.json``.
+
+## ~~Project result and conclusion~~
+
+~~It's a cool project but I'ma put it on hold for now. 
 It would require a major refactor on how I obtain normals.
-Probably gonna look into porting it to wasm but not right now.
+Probably gonna look into porting it to wasm but not right now.~~
 
-I'm kinda burned out on that project(Also finals). 
-That being said still was cool codding it.
+~~I'm kinda burned out on that project(Also finals). 
+That being said still was cool codding it.~~
+Lol nevermind
