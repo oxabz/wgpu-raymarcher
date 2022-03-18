@@ -1,0 +1,36 @@
+{
+  "target": "src/shaders/raymarcher2.wgsl",
+  "components": [
+    {
+      "title": "Types",
+      "path": "src/shaders/components/types.wgsl"
+    },{
+      "title": "Bindings",
+      "path": "src/shaders/components/bindings.wgsl"
+    },{
+      "title": "Math",
+      "path": "src/shaders/components/math.wgsl"
+    },{
+      "title": "Geometry",
+      "path": "src/shaders/components/geometry.wgsl"
+    },{
+      "title": "Distances",
+      "path": "src/shaders/components/distances.wgsl"
+    },{
+      "title": "Normals",
+      "path": "src/shaders/components/normals.wgsl"
+    },{
+      "title": "Distance",
+      "path": "src/shaders/components/distance.wgsl"
+    },{
+      "title": "Normal",
+      "path": "src/shaders/components/normal.wgsl"
+    },{
+      "title": "Ray",
+      "path": "src/shaders/components/ray.wgsl"
+    },{
+      "title": "Main",
+      "path": "src/shaders/components/main.wgsl"
+    }
+  ]
+}

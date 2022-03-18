@@ -216,12 +216,12 @@ impl AppState {
         println!("delta t : {}",delta_t.as_millis());
 
         //rotate the camera
-/*        let angle = self.camera_manager.angle();
+        let angle = self.camera_manager.angle();
         let rotation_speed = 0.2*PI;
         self.camera_manager.set_angle(angle+rotation_speed*delta_t.as_secs_f32() + if angle > 2.0 * PI { -2.0 * PI } else { 0.0 });
         self.camera_manager.set_position(self.camera_manager.forward() * -20.0);
         println!("Forward : {}; Up : {}; Right : {}", self.camera_manager.forward(), self.camera_manager.up(), self.camera_manager.right());
-*/    }
+    }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         //Surface texture
@@ -345,7 +345,7 @@ impl AppState {
 
         let compute_shader = device.create_shader_module(&ShaderModuleDescriptor{
             label: Some("Ray Marcher Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/raymarcher.wgsl").into())
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/raymarcher2.wgsl").into())
         });
 
         let render_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor{
