@@ -15,6 +15,7 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
 - [ ] Making browser ray marcher
 - [x] Training myself in linear algebra
 - [x] Learning ownership in complexe programs
+- [x] Learning abour ``build.rs``
 - [ ] Learning the wasm/rust stack
 
 ## Features targets
@@ -31,7 +32,8 @@ It's a mostly an naive implementation because I vaguely remember a similar proje
   - [ ] Donut
 - [x] Moving the camera
 - [ ] Tweakable render parameter
-- [ ] Fix normals
+- [x] Fix normals
+- [ ] Find a way to fix the cursed self-shadows
 
 ## Basic Architecture
 
