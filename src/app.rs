@@ -157,12 +157,12 @@ impl AppState {
         let desc = CompositDescriptor::DIFFERENCE(
             Box::new(CompositDescriptor::SPHERE(Sphere::new([0.0,0.0,0.0],1.0), props.clone())),
             Box::new(CompositDescriptor::CUBOID(Cuboid::new([0.0,0.0,0.0],[1.5,1.5,1.5], [0.0,0.0,0.0]),props.clone()))
-        );*/
+        );*//*
         let desc = CompositDescriptor::BLEND(
             Box::new(CompositDescriptor::SPHERE(Sphere::new([1.7,0.0,0.0],2.0), props.clone())),
             Box::new(CompositDescriptor::SPHERE(Sphere::new([-1.7,0.0,0.0],2.0), props.clone())),
             2.0
-        );
+        );*/
 
         shape_collection.create_composite(&desc);
         /*shape_collection.add_cube(Cuboid::new([0.0,0.0,0.0], [1.0,1.0,1.0], [0.0,0.0,0.0]), ShapeProperties{
