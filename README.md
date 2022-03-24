@@ -119,6 +119,14 @@ But when the shader file is 500 lines long it's not sufficient.
 Solution : ``.wgsl.json``. 
 I made a build step that make a singular ``.wgsl`` from smaller ``.wgsl``s and a ``.wgsl.json``.
 
+### Self-shadow
+
+I have no idea 
+
+Shape have shadow of themselves even if they shouldnt.
+
+My best guess is operation precision  but maybe not
+
 ## ~~Project result and conclusion~~
 
 ~~It's a cool project but I'ma put it on hold for now. 
