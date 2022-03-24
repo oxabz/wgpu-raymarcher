@@ -119,7 +119,7 @@ But when the shader file is 500 lines long it's not sufficient.
 Solution : ``.wgsl.json``. 
 I made a build step that make a singular ``.wgsl`` from smaller ``.wgsl``s and a ``.wgsl.json``.
 
-### Ş̴͚̙͒̏è̸̙͈̳̟͐l̷͖̰̔f̶̛̼̥͇̠̊́-̴̤̜̥̩̽͗s̴͔͐͊̒̚͜ḩ̴̌́a̵͙̅d̶̝̼̘̼͗͝o̴̜͒̽̒ẁ̵̭̝̎́̚
+### S̶̥͠e̷͇͊l̴͙̍ḟ̸̠-̵͇͛ś̷̥h̷̹̋â̷͈d̷̾ͅo̸̬͒ẇ̵̼
 
 I have no idea 
 
